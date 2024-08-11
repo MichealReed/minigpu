@@ -1,28 +1,18 @@
-include(FetchContent)
+set(GPU_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu")
 
-FetchContent_Declare(EXT_GPU_H 
-    URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/gpu.h"
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu"
-    DOWNLOAD_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu"
-    DOWNLOAD_NO_EXTRACT 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    CONFIGURE_COMMAND ""
-)
+set(GPU_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/gpu.h")
+set(GPU_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/gpu.cpp")
+set(LOGGING_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/utils/logging.h")
+set(ARRAY_UTILS_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/utils/array_utils.h")
+set(HALF_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/numeric_types/half.cpp")
+set(HALF_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/numeric_types/half.h")
 
-FetchContent_Declare(EXT_GPU_UTILS_LOGGING_H 
-    URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/utils/logging.h"
-    SOURCE_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu/utils"
-    DOWNLOAD_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu/utils"
-    DOWNLOAD_NO_EXTRACT 1
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    CONFIGURE_COMMAND ""
-)
+set(GPU_H_PATH "${GPU_INCLUDE_DIR}/gpu.h")
+set(LOGGING_H_PATH "${GPU_INCLUDE_DIR}/utils/logging.h")
+set(HALF_CPP_PATH "${GPU_INCLUDE_DIR}/numeric_types/half.cpp")
 
-FetchContent_MakeAvailable(EXT_GPU_H)
-FetchContent_MakeAvailable(EXT_GPU_UTILS_LOGGING_H)
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/download.cmake")
+download_files(GPU_H LOGGING_H HALF_CPP)
 
 add_library(gpu INTERFACE)
-add_dependencies(gpu EXT_GPU_H EXT_GPU_UTILS_LOGGING_H)
-target_include_directories(gpu SYSTEM INTERFACE "${PROJECT_SOURCE_DIR}/third_party/include")
+target_include_directories(gpu SYSTEM INTERFACE "${GPU_INCLUDE_DIR}")

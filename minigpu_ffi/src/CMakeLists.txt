@@ -16,5 +16,4 @@ endif()
 
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
-#include("${CMAKE_CURRENT_SOURCE_DIR}/third_party/lib/cmake/Dawn/DawnConfig.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")

@@ -27,3 +27,4 @@ doc/api/
 .flutter-plugins-dependencies
 
 third_party/*
+minigpu_ffi/src/external/*
