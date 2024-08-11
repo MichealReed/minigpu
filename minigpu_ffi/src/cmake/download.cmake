@@ -22,11 +22,16 @@ function(download_files)
     endforeach()
 endfunction()
 
+function(download_files)
+    # ... (keep the existing code for the download_files function)
+endfunction()
+
 function(download_repository REPO_NAME REPO_URL REPO_PATH)
-    set(REPO_EXPECTED_DIR "${REPO_PATH}/${REPO_NAME}")
     set(ZIP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${REPO_NAME}.zip")
+    set(EXTRACTED_DIR "${REPO_PATH}/${REPO_NAME}-main")
+    set(RENAMED_DIR "${REPO_PATH}/${REPO_NAME}")
     
-    if(NOT EXISTS "${REPO_EXPECTED_DIR}" OR NOT EXISTS "${REPO_EXPECTED_DIR}/*")
+    if(NOT EXISTS "${RENAMED_DIR}" OR NOT EXISTS "${RENAMED_DIR}/*")
         message(STATUS "Setting up ${REPO_NAME} repository...")
         
         # Download the ZIP file if it doesn't exist in the cache
@@ -52,9 +57,8 @@ function(download_repository REPO_NAME REPO_URL REPO_PATH)
         endif()
         
         # Rename the extracted directory to remove the "-main" suffix
-        file(GLOB EXTRACTED_DIR "${REPO_PATH}/*-main")
-        if(EXTRACTED_DIR)
-            file(RENAME "${EXTRACTED_DIR}" "${REPO_EXPECTED_DIR}")
+        if(EXISTS "${EXTRACTED_DIR}")
+            file(RENAME "${EXTRACTED_DIR}" "${RENAMED_DIR}")
         endif()
     endif()
 endfunction()
