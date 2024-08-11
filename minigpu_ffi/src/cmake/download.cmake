@@ -23,20 +23,27 @@ function(download_files)
 endfunction()
 
 function(download_repository REPO_NAME REPO_URL REPO_PATH)
-    if(NOT EXISTS "${REPO_PATH}")
-        message(STATUS "Downloading ${REPO_NAME} repository...")
+    set(REPO_EXPECTED_DIR "${REPO_PATH}/${REPO_NAME}")
+    set(ZIP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${REPO_NAME}.zip")
+    
+    if(NOT EXISTS "${REPO_EXPECTED_DIR}" OR NOT EXISTS "${REPO_EXPECTED_DIR}/*")
+        message(STATUS "Setting up ${REPO_NAME} repository...")
         
-        # Download the ZIP file
-        file(DOWNLOAD "${REPO_URL}/archive/refs/heads/main.zip" "${CMAKE_CURRENT_BINARY_DIR}/${REPO_NAME}.zip" STATUS DOWNLOAD_STATUS)
-        list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-        if(NOT STATUS_CODE EQUAL 0)
-            message(FATAL_ERROR "Failed to download ${REPO_NAME} repository ZIP file")
+        # Download the ZIP file if it doesn't exist in the cache
+        if(NOT EXISTS "${ZIP_FILE}")
+            message(STATUS "Downloading ${REPO_NAME} repository...")
+            file(DOWNLOAD "${REPO_URL}/archive/refs/heads/main.zip" "${ZIP_FILE}" STATUS DOWNLOAD_STATUS)
+            list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+            if(NOT STATUS_CODE EQUAL 0)
+                message(FATAL_ERROR "Failed to download ${REPO_NAME} repository ZIP file")
+            endif()
         endif()
         
         # Extract the ZIP file
+        message(STATUS "Extracting ${REPO_NAME} repository...")
         file(MAKE_DIRECTORY "${REPO_PATH}")
         execute_process(
-            COMMAND ${CMAKE_COMMAND} -E tar -xf "${CMAKE_CURRENT_BINARY_DIR}/${REPO_NAME}.zip"
+            COMMAND ${CMAKE_COMMAND} -E tar -xf "${ZIP_FILE}"
             WORKING_DIRECTORY "${REPO_PATH}"
             RESULT_VARIABLE EXTRACT_RESULT
         )
@@ -47,9 +54,8 @@ function(download_repository REPO_NAME REPO_URL REPO_PATH)
         # Rename the extracted directory to remove the "-main" suffix
         file(GLOB EXTRACTED_DIR "${REPO_PATH}/*-main")
         if(EXTRACTED_DIR)
-            file(RENAME "${EXTRACTED_DIR}" "${REPO_PATH}/temp")
-            file(REMOVE_RECURSE "${REPO_PATH}/*")
-            file(RENAME "${REPO_PATH}/temp" "${REPO_PATH}/${REPO_NAME}")
+            file(RENAME "${EXTRACTED_DIR}" "${REPO_EXPECTED_DIR}")
         endif()
     endif()
 endfunction()
+
