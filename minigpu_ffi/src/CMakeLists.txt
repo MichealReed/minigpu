@@ -14,6 +14,105 @@ else()
     message(FATAL_ERROR "File ${FILENAME} not found within 8 levels up from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
+
+if(NOT EMSCRIPTEN)
+    set(MAIN_LIB minigpu_ffi)
+else()
+    set(MAIN_LIB minigpu_web)
+    set(MAIN_JS minigpu_web_js)
+endif()
+
+set(MAIN_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+set(MAIN_OUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
+set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/build)
+
+if(NOT EMSCRIPTEN)
+    add_library(${MAIN_LIB} SHARED)
+else()
+    add_executable(${MAIN_LIB})
+endif()
+
+file(GLOB_RECURSE MAIN_SOURCES
+    ${MAIN_PATH}/src/*.c
+)
+
+target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
+
+file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
+    ${MAIN_PATH}/external/include/*
+)
+
+list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/)
+target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
+
+# Definitions
+target_compile_definitions(${MAIN_LIB} PUBLIC 
+    DART_SHARED_LIB
+)
+
+# Set properties
+if(NOT EMSCRIPTEN)
+    set_target_properties(${MAIN_LIB} PROPERTIES
+        PUBLIC_HEADER include/gpu.h
+        OUTPUT_NAME ${MAIN_LIB}
+    )
+else()
+    set_target_properties(${MAIN_LIB} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${WEB_OUTPUT_DIR}
+    )
+    target_compile_options(${MAIN_LIB} PUBLIC
+        -O0
+        -flto -fno-rtti
+    )
+    set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
+        -O2 \
+        -flto \
+        -sEXPORTED_FUNCTIONS=_malloc,_free -sEXPORTED_RUNTIME_METHODS=ccall \
+        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb -sUSE_WEBGPU=1 -sASYNCIFY=1 \
+    ")
+endif()
+
+# Main JS
+if(EMSCRIPTEN)
+    file(GLOB JS_SOURCES ${MAIN_PATH}/js/*.js)
+    set(JS_OUTPUTS)
+    foreach(JS_FILE ${JS_SOURCES})
+        get_filename_component(JS_FILENAME ${JS_FILE} NAME)
+        set(JS_OUTPUT ${WEB_OUTPUT_DIR}/${JS_FILENAME})
+        list(APPEND JS_OUTPUTS ${JS_OUTPUT})
+        add_custom_command(
+            OUTPUT ${JS_OUTPUT}
+            COMMAND ${CMAKE_COMMAND} -E copy ${JS_FILE} ${JS_OUTPUT}
+            DEPENDS ${JS_FILE}
+            COMMENT "Copying ${JS_FILENAME} to web output directory"
+        )
+    endforeach()
+    add_custom_target(${MAIN_JS} ALL
+        DEPENDS ${JS_OUTPUTS}
+        COMMENT "Copying JS sources to web output directory"
+    )
+    add_dependencies(${MAIN_LIB} ${MAIN_JS})
+
+    # Configure the modify_js.cmake script
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake
+        @ONLY
+    )
+
+    # Add custom command to modify the output JS file
+    add_custom_command(
+        TARGET ${MAIN_LIB} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Modifying ${MAIN_LIB}.js to use locateFile"
+        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake
+        WORKING_DIRECTORY ${WEB_OUTPUT_DIR}
+        COMMENT "Post-processing ${MAIN_LIB}.js"
+    )
+endif()
+
+# Additional libs
+if(ANDROID)
+    target_link_libraries(${MAIN_LIB} OpenSLES log)
+endif()
