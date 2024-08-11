@@ -4,7 +4,7 @@ SHELL := /bin/bash
 # Detect the operating system
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
-    RMDIR_CMD := del /S
+    RMDIR_CMD := del /S /q
     SLASH := \\
 else
     DETECTED_OS := $(shell uname)
