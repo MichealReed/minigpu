@@ -1,7 +1,7 @@
 set(EXT_SOURCE_DIR "${PROJECT_SOURCE_DIR}/external" CACHE STRING "Path to the local source directory")
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/download.cmake")
-download_repository("dawn" "https://github.com/google/dawn" "${EXT_SOURCE_DIR}")
+download_repository("dawn" "https://github.com/google/dawn" "${EXT_SOURCE_DIR}/dawn")
 
 execute_process(
     COMMAND python3 ${EXT_SOURCE_DIR}/dawn/tools/fetch_dawn_dependencies.py

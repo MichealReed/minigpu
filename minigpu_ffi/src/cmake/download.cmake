@@ -22,44 +22,26 @@ function(download_files)
     endforeach()
 endfunction()
 
-function(download_files)
-    # ... (keep the existing code for the download_files function)
-endfunction()
-
 function(download_repository REPO_NAME REPO_URL REPO_PATH)
-    set(ZIP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${REPO_NAME}.zip")
-    set(EXTRACTED_DIR "${REPO_PATH}/${REPO_NAME}-main")
-    set(RENAMED_DIR "${REPO_PATH}/${REPO_NAME}")
-    
-    if(NOT EXISTS "${RENAMED_DIR}" OR NOT EXISTS "${RENAMED_DIR}/*")
-        message(STATUS "Setting up ${REPO_NAME} repository...")
-        
-        # Download the ZIP file if it doesn't exist in the cache
-        if(NOT EXISTS "${ZIP_FILE}")
-            message(STATUS "Downloading ${REPO_NAME} repository...")
-            file(DOWNLOAD "${REPO_URL}/archive/refs/heads/main.zip" "${ZIP_FILE}" STATUS DOWNLOAD_STATUS)
-            list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-            if(NOT STATUS_CODE EQUAL 0)
-                message(FATAL_ERROR "Failed to download ${REPO_NAME} repository ZIP file")
-            endif()
-        endif()
-        
-        # Extract the ZIP file
-        message(STATUS "Extracting ${REPO_NAME} repository...")
+    if(NOT EXISTS "${REPO_PATH}/.git")
+        message(STATUS "Downloading ${REPO_NAME} repository...")
         file(MAKE_DIRECTORY "${REPO_PATH}")
         execute_process(
-            COMMAND ${CMAKE_COMMAND} -E tar -xf "${ZIP_FILE}"
-            WORKING_DIRECTORY "${REPO_PATH}"
-            RESULT_VARIABLE EXTRACT_RESULT
+            COMMAND git clone "${REPO_URL}" "${REPO_PATH}"
+            RESULT_VARIABLE CLONE_RESULT
         )
-        if(NOT EXTRACT_RESULT EQUAL 0)
-            message(FATAL_ERROR "Failed to extract ${REPO_NAME} repository ZIP file")
+        if(NOT CLONE_RESULT EQUAL 0)
+            message(FATAL_ERROR "Failed to clone ${REPO_NAME} repository")
         endif()
-        
-        # Rename the extracted directory to remove the "-main" suffix
-        if(EXISTS "${EXTRACTED_DIR}")
-            file(RENAME "${EXTRACTED_DIR}" "${RENAMED_DIR}")
+    else()
+        message(STATUS "${REPO_NAME} repository already exists")
+        execute_process(
+            COMMAND git fetch
+            WORKING_DIRECTORY "${REPO_PATH}"
+            RESULT_VARIABLE FETCH_RESULT
+        )
+        if(NOT FETCH_RESULT EQUAL 0)
+            message(WARNING "Failed to fetch updates for ${REPO_NAME} repository")
         endif()
     endif()
 endfunction()
-
