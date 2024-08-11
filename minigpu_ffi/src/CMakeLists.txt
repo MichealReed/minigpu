@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(minigpu_ffi VERSION 1.0.0 LANGUAGES C)
+project(minigpu_ffi VERSION 1.0.0 LANGUAGES CXX)
 
 # Configure the find_root.cmake script
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
@@ -35,7 +35,7 @@ else()
 endif()
 
 file(GLOB_RECURSE MAIN_SOURCES
-    ${MAIN_PATH}/src/*.c
+    ${MAIN_PATH}/src/*.cpp
 )
 
 target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
