@@ -1,10 +1,19 @@
 #include "minigpu.h"
-#include "gpu.h"
-
+#include "../external/include/gpu/gpu.h"
+#include "webgpu/webgpu.h"
 using namespace gpu;
 
 extern "C"
 {
+    void mgpuInitializeContext()
+    {
+        mgpu::initializeContext();
+    }
+
+    void mgpuDestroyContext()
+    {
+        mgpu::destroyContext();
+    }
 
     MGPUComputeShader *mgpuCreateComputeShader()
     {
@@ -18,69 +27,146 @@ extern "C"
 
     void mgpuLoadKernelString(MGPUComputeShader *shader, const char *kernelString)
     {
-        reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelString(kernelString);
+        if (shader && kernelString)
+        {
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelString(kernelString);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader or kernelString pointer");
+        }
     }
 
     void mgpuLoadKernelFile(MGPUComputeShader *shader, const char *path)
     {
-        reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelFile(path);
+        if (shader && path)
+        {
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelFile(path);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader or path pointer");
+        }
     }
 
     int mgpuHasKernel(MGPUComputeShader *shader)
     {
-        return reinterpret_cast<mgpu::ComputeShader *>(shader)->hasKernel();
+        if (shader)
+        {
+            return reinterpret_cast<mgpu::ComputeShader *>(shader)->hasKernel();
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader pointer");
+            return 0;
+        }
     }
 
     MGPUBuffer *mgpuCreateBuffer(MGPUComputeShader *shader, uint32_t size, uint32_t memSize)
     {
-        mgpu::Buffer buffer = reinterpret_cast<mgpu::ComputeShader *>(shader)->createBuffer(size, memSize);
-        return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(buffer));
+        if (shader)
+        {
+            gpu::Array array = reinterpret_cast<mgpu::ComputeShader *>(shader)->createBuffer(size, memSize);
+            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(array));
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader pointer");
+            return nullptr;
+        }
     }
 
     void mgpuDestroyBuffer(MGPUBuffer *buffer)
     {
-        delete reinterpret_cast<mgpu::Buffer *>(buffer);
+        if (buffer)
+        {
+            delete reinterpret_cast<mgpu::Buffer *>(buffer);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid buffer pointer");
+        }
     }
 
     void mgpuSetBuffer(MGPUComputeShader *shader, const char *kernel, const char *tag, MGPUBuffer *buffer)
     {
-        reinterpret_cast<mgpu::ComputeShader *>(shader)->setBuffer(kernel, tag, *reinterpret_cast<mgpu::Buffer *>(buffer));
+        if (shader && kernel && tag && buffer)
+        {
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->setBuffer(kernel, tag, *reinterpret_cast<mgpu::Buffer *>(buffer));
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader, kernel, tag, or buffer pointer");
+        }
     }
 
     void mgpuDispatch(MGPUComputeShader *shader, const char *kernel, uint32_t groupsX, uint32_t groupsY, uint32_t groupsZ)
     {
-        reinterpret_cast<mgpu::ComputeShader *>(shader)->dispatch(kernel, groupsX, groupsY, groupsZ);
+        if (shader && kernel)
+        {
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->dispatch(kernel, groupsX, groupsY, groupsZ);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid shader or kernel pointer");
+        }
     }
 
     void mgpuReadBufferSync(MGPUBuffer *buffer, MGPUBuffer *otherBuffer)
     {
-        reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer));
+        if (buffer && otherBuffer)
+        {
+            reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer));
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid buffer or otherBuffer pointer");
+        }
     }
 
     void mgpuReadBufferAsync(MGPUBuffer *buffer, MGPUBuffer *otherBuffer, void (*callback)(void *), void *userData)
     {
-        reinterpret_cast<mgpu::Buffer *>(buffer)->requestAsync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer), callback, userData);
+        if (buffer && otherBuffer && callback)
+        {
+            reinterpret_cast<mgpu::Buffer *>(buffer)->requestAsync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer), callback, userData);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid buffer, otherBuffer, or callback pointer");
+        }
     }
 
 } // extern "C"
 
 namespace mgpu
 {
+    gpu::Context ctx;
+
+    void initializeContext()
+    {
+        ctx = gpu::Context();
+    }
+
+    void destroyContext()
+    {
+        ctx = gpu::Context();
+    }
 
     Buffer::Buffer(gpu::Array data) : data(data) {}
 
-    void Buffer::readSync(Buffer &otherBuffer)
+    void Buffer::readSync(const Buffer &otherBuffer)
     {
-        gpu::toCPU(ctx, data, otherBuffer.data.buffer, otherBuffer.data.size);
+        gpu::Tensor tensor{data, gpu::Shape{data.size}};
+        gpu::toCPU(ctx, tensor, otherBuffer.data.buffer, otherBuffer.data.size);
     }
-
-    void Buffer::requestAsync(Buffer &otherBuffer, std::function<void(void *)> callback, void *userData)
+    void Buffer::requestAsync(const Buffer &otherBuffer, std::function<void(void *)> callback, void *userData)
     {
         gpu::CopyData op;
         op.future = op.promise.get_future();
         {
+            WGPUBufferUsageFlags usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead;
             WGPUBufferDescriptor readbackBufferDescriptor = {
-                .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead,
+                .usage = usage,
                 .size = otherBuffer.data.size,
             };
             op.readbackBuffer =
@@ -95,8 +181,8 @@ namespace mgpu
             op.commandBuffer = wgpuCommandEncoderFinish(commandEncoder, nullptr);
             gpu::check(op.commandBuffer, "Create command buffer", __FILE__, __LINE__);
         }
-        gpu::CallbackData callbackData = {op.readbackBuffer, otherBuffer.data.size, otherBuffer.data.buffer, &op.promise,
-                                          &op.future};
+        gpu::CallbackData callbackData = {op.readbackBuffer, otherBuffer.data.size, otherBuffer.data.buffer,
+                                          &op.promise, &op.future};
         wgpuQueueSubmit(ctx.queue, 1, &op.commandBuffer);
         wgpuQueueOnSubmittedWorkDone(
             ctx.queue,
@@ -131,59 +217,76 @@ namespace mgpu
         wgpuBufferRelease(data.buffer);
     }
 
-    void ComputeShader::loadKernelString(const std::string& kernelString) {
-  code = gpu::KernelCode(kernelString);
-}
-
-void ComputeShader::loadKernelFile(const std::string& path) {
-  std::ifstream file(path);
-  std::string kernelString((std::istreambuf_iterator<char>(file)),
-                            std::istreambuf_iterator<char>());
-  loadKernelString(kernelString);
-}
-
-bool ComputeShader::hasKernel() {
-  return !code.data.empty();
-}
-
-Buffer ComputeShader::createBuffer(uint32_t size, uint32_t memSize) {
-  gpu::Array data = gpu::createTensor(ctx, {size}, gpu::kf32);
-  return Buffer(data);
-}
-
-void ComputeShader::setBuffer(const std::string& kernel, const std::string& tag, Buffer& buffer) {
-  // Find the binding index for the given tag in the kernel
-  size_t bindingIndex = -1;
-  for (size_t i = 0; i < code.data.size(); ++i) {
-    std::string pattern = "@group(0) @binding(" + std::to_string(i) + ")";
-    if (code.data.find(pattern) != std::string::npos) {
-      bindingIndex = i;
-      break;
+    void ComputeShader::loadKernelString(const std::string &kernelString)
+    {
+        code = gpu::KernelCode{kernelString, {256, 1, 1}};
     }
-  }
 
-  if (bindingIndex == -1) {
-    LOG(kDefLog, kError, "Binding tag '%s' not found in kernel '%s'", tag.c_str(), kernel.c_str());
-    return;
-  }
+    void ComputeShader::loadKernelFile(const std::string &path)
+    {
+        std::ifstream file(path);
+        std::string kernelString((std::istreambuf_iterator<char>(file)),
+                                 std::istreambuf_iterator<char>());
+        loadKernelString(kernelString);
+    }
 
-  // Resize the bindings vector if necessary
-  if (bindingIndex >= bindings.size()) {
-    bindings.resize(bindingIndex + 1);
-  }
+    bool ComputeShader::hasKernel() const
+    {
+        return !code.data.empty();
+    }
 
-  // Store the Buffer object in the bindings vector at the corresponding index
-  bindings[bindingIndex] = gpu::Tensor{buffer.data, gpu::Shape{buffer.data.size}};
-}
+    gpu::Array ComputeShader::createBuffer(uint32_t size, uint32_t memSize)
+    {
+        WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
+        WGPUBufferDescriptor descriptor = {
+            .usage = usage,
+            .size = memSize,
+        };
+        WGPUBuffer buffer = wgpuDeviceCreateBuffer(ctx.device, &descriptor);
+        gpu::Array array = {
+            .buffer = buffer,
+            .usage = usage,
+            .size = size,
+        };
+        return array;
+    }
 
+    void ComputeShader::setBuffer(const std::string &kernel, const std::string &tag, const Buffer &buffer)
+    {
+        // Find the binding index for the given tag in the kernel
+        size_t bindingIndex = std::string::npos;
+        for (size_t i = 0; i < code.data.size(); ++i)
+        {
+            std::string pattern = "@group(0) @binding(" + std::to_string(i) + ")";
+            if (code.data.find(pattern) != std::string::npos)
+            {
+                bindingIndex = i;
+                break;
+            }
+        }
 
+        if (bindingIndex == std::string::npos)
+        {
+            LOG(kDefLog, kError, "Binding tag '%s' not found in kernel '%s'", tag.c_str(), kernel.c_str());
+            return;
+        }
 
-void ComputeShader::dispatch(const std::string& kernel, uint32_t groupsX, uint32_t groupsY, uint32_t groupsZ) {
-  gpu::Kernel op = gpu::createKernel(ctx, code, bindings, {groupsX, groupsY, groupsZ});
-  std::promise<void> promise;
-  std::future<void> future = promise.get_future();
-  gpu::dispatchKernel(ctx, op, promise);
-  gpu::wait(ctx, future);
-}
+        // Resize the bindings vector if necessary
+        if (bindingIndex >= bindings.size())
+        {
+            bindings.resize(bindingIndex + 1);
+        }
+        // Store the Buffer object in the bindings vector at the corresponding index
+        bindings[bindingIndex] = gpu::Tensor{buffer.data, gpu::Shape{buffer.data.size}};
+    }
+
+    void ComputeShader::dispatch(const std::string &kernel, uint32_t groupsX, uint32_t groupsY, uint32_t groupsZ)
+    {
+        gpu::Kernel op = gpu::createKernel(ctx, code, bindings.data(), bindings.size(), nullptr, {groupsX, groupsY, groupsZ});
+        std::promise<void> promise;
+        gpu::dispatchKernel(ctx, op, promise);
+        auto future = promise.get_future();
+        gpu::wait(ctx, future);
+    }
 
 } // namespace mgpu
