@@ -1,15 +1,72 @@
+publish_to: none
 name: minigpu_ffi
-description: A starting point for Dart libraries or applications.
+description: FFI implementation of the minigpu package.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_ffi
+
+#####
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.3.0"
 
-# Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
+  ffi: ^2.0.2
+  minigpu_platform_interface:
+    path: ../minigpu_platform_interface
 
 dev_dependencies:
-  lints: ^4.0.0
-  test: ^1.24.0
+  flutter_lints: ^2.0.1
+  ffigen: ^8.0.2
+
+#####
+
+ffigen:
+  name: minigpuFfiBindings
+  description: Bindings for minigpu.h
+  output: "lib/minigpu_ffi_bindings.dart"
+  headers:
+    entry-points:
+      - "src/include/minigpu.h"
+      - "src/include/engine.h"
+      - "src/include/sound.h"
+      - "src/include/record.h"
+      - "src/include/generator.h"
+      - "src/include/circular_buffer.h"
+    include-directives:
+      - "src/include/*.h"
+      - "/usr/lib/clang/18/include/stdbool.h"
+  preamble: |
+    // ignore_for_file: camel_case_types
+    // ignore_for_file: prefer_double_quotes
+    // ignore_for_file: non_constant_identifier_names
+    // ignore_for_file: constant_identifier_names
+    // ignore_for_file: prefer_expression_function_bodies
+    // ignore_for_file: sort_constructors_first
+    // ignore_for_file: unused_element 
+  llvm-path:
+    - /usr/lib64/libclang.so
+  compiler-opts:
+    - -I/usr/lib/clang/18/include/
+
+##
+
+flutter:
+  plugin:
+    implements: minigpu
+    platforms:
+      android:
+        ffiPlugin: true
+        dartPluginClass: minigpuFfi
+      ios:
+        ffiPlugin: true
+        dartPluginClass: minigpuFfi
+      linux:
+        ffiPlugin: true
+        dartPluginClass: minigpuFfi
+      macos:
+        ffiPlugin: true
+        dartPluginClass: minigpuFfi
+      windows:
+        ffiPlugin: true
+        dartPluginClass: minigpuFfi
