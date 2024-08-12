@@ -149,7 +149,7 @@ namespace mgpu
 
     void destroyContext()
     {
-        ctx = gpu::Context();
+        delete &ctx;
     }
 
     Buffer::Buffer(gpu::Array data) : data(data) {}
