@@ -1,4 +1,4 @@
-#include "minigpu.h"
+#include "../include/minigpu.h"
 #include "../external/include/gpu/gpu.h"
 #include "webgpu/webgpu.h"
 using namespace gpu;
@@ -144,7 +144,7 @@ namespace mgpu
 
     void initializeContext()
     {
-        ctx = gpu::Context();
+        ctx = gpu::createContext();
     }
 
     void destroyContext()

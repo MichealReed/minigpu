@@ -1,6 +1,6 @@
 include(FetchContent)
 
-set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/fetchcontent")
+set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_BINARY_DIR}/fetchcontent")
 set(WEBGPU_DIST_LOCAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/WebGPU-distribution")
 
 if(USE_LOCAL_LIBS)

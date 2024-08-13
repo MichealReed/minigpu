@@ -4,11 +4,13 @@ SHELL := /bin/bash
 # Detect the operating system
 ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
-    RMDIR_CMD := del /S
+    DEL_CMD := del /s /q
+	RMDIR_CMD := rmdir /s /q
     SLASH := \\
 else
     DETECTED_OS := $(shell uname)
-    RMDIR_CMD := rm -rf
+    DEL_CMD := rm -rf
+	RMDIR_CMD := rm -rf
     SLASH := /
 endif
 
@@ -69,9 +71,14 @@ build_weblib: init_submodules
 	@echo "Building ffi lib to web via emscripten..."
 	@cd $(BUILD_DIR) && emcmake cmake .. && cmake --build .
 
-clean_weblib:
-	@echo "Cleaning web lib..."
-	@$(RMDIR_CMD) "$(BUILD_DIR)/*"
+build_ffilib: init_submodules
+	@echo "Building ffi lib to native via emscripten..."
+	@cd $(BUILD_DIR) && cmake cmake .. --fresh && cmake --build .
+
+clean_lib:
+	@echo "Cleaning lib dir..."
+	@$(DEL_CMD) "$(BUILD_DIR)*"
+	@$(RMDIR_CMD) "$(BUILD_DIR)*"
 
 help:
 	@echo "Available targets:"
