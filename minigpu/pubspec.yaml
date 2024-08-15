@@ -1,15 +1,49 @@
+publish_to: none
 name: minigpu
-description: A starting point for Dart libraries or applications.
+description: A gpu compute library for dart.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/MichealReed/minigpu/tree/master/minigpu
+
+#####
 
 environment:
-  sdk: ^3.5.0
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=1.20.0"
 
-# Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
+  flutter:
+    sdk: flutter
+  flutter_web_plugins:
+    sdk: flutter
+  minigpu_platform_interface:
+    path: ../minigpu_platform_interface
+  minigpu_ffi:
+    path: ../minigpu_ffi
+  minigpu_web:
+    path: ../minigpu_web
 
 dev_dependencies:
-  lints: ^4.0.0
-  test: ^1.24.0
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.1
+
+#####
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        default_package: minigpu_ffi
+      ios:
+        default_package: minigpu_ffi
+      linux:
+        default_package: minigpu_ffi
+      macos:
+        default_package: minigpu_ffi
+      windows:
+        default_package: minigpu_ffi
+      web:
+        default_package: minigpu_web
+
+  assets:
+    - assets/hello.shader

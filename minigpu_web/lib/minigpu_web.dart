@@ -5,6 +5,9 @@ import 'package:minigpu_web/bindings/minigpu_bindings.dart' as wasm;
 import 'package:minigpu_web/bindings/wasm/wasm.dart';
 
 class MinigpuWeb extends MinigpuPlatform {
+  MinigpuWeb._();
+  static void registerWith(dynamic _) =>
+      MinigpuPlatform.instance = MinigpuWeb._();
   @override
   void initializeContext() {
     wasm.mgpuInitializeContext();

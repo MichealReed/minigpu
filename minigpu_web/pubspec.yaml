@@ -25,10 +25,10 @@ flutter:
     implements: minigpu
     platforms:
       web:
-        pluginClass: MiniaudioDartWeb
+        pluginClass: MinigpuWeb
         fileName: minigpu_web.dart
 
   assets:
-    - packages/minigpu/build/minigpu_web.loader.js
-    - packages/minigpu/build/minigpu_web.wasm
-    - packages/minigpu/build/minigpu_web.js
+    - packages/minigpu_web/build/minigpu_web.loader.js
+    - packages/minigpu_web/build/minigpu_web.wasm
+    - packages/minigpu_web/build/minigpu_web.js

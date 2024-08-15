@@ -8,10 +8,8 @@ import 'package:js/js_util.dart';
 import 'package:minigpu_web/bindings/wasm/wasm.dart';
 
 // Opaque types
-@JS()
 final class MGPUComputeShader extends Opaque {}
 
-@JS()
 final class MGPUBuffer extends Opaque {}
 
 // JS interop

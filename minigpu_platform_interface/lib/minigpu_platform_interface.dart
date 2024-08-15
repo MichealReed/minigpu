@@ -41,6 +41,6 @@ abstract class PlatformBuffer {
   void destroy();
 }
 
-class MinigpuPlatformOutOfMemoryException implements Exception {
+final class MinigpuPlatformOutOfMemoryException implements Exception {
   String toString() => "Out of memory";
 }

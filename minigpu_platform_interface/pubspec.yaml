@@ -1,7 +1,8 @@
+publish_to: none
 name: minigpu_platform_interface
-description: A platform interface for minigpu.
+description: A web library for minigpu wasm.
 version: 1.0.0
-repository: https://github.com/MichealReed/minigpu
+repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_platform_interface
 
 environment:
   sdk: ^3.5.0
