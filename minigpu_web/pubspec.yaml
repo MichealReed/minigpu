@@ -1,14 +1,14 @@
 publish_to: none
 name: minigpu_web
-description: Web implementation of the MiniaudioDart package.
+description: A web library for minigpu wasm.
 version: 1.0.0
 repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_web
 
 #####
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
-  flutter: ">=1.20.0"
+  sdk: ^3.5.0
+  flutter: ^3.0.0
 
 dependencies:
   js: ^0.6.3

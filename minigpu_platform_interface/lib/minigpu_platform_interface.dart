@@ -7,7 +7,7 @@ abstract class MinigpuPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static MinigpuPlatform _instance = MinigpuPlatform();
+  static late MinigpuPlatform _instance;
 
   static MinigpuPlatform get instance => _instance;
 
@@ -36,5 +36,11 @@ abstract class PlatformBuffer {
   void readSync(PlatformBuffer otherBuffer);
   void readAsync(
       PlatformBuffer otherBuffer, void Function() callback, dynamic userData);
+  void writeFloat32List(Float32List data);
+  Float32List readFloat32List(int size);
   void destroy();
+}
+
+class MinigpuPlatformOutOfMemoryException implements Exception {
+  String toString() => "Out of memory";
 }

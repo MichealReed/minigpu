@@ -1,14 +1,14 @@
 name: minigpu_platform_interface
-description: A starting point for Dart libraries or applications.
+description: A platform interface for minigpu.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/MichealReed/minigpu
 
 environment:
   sdk: ^3.5.0
 
 # Add regular dependencies here.
 dependencies:
-  # path: ^1.8.0
+  plugin_platform_interface: ^2.1.8
 
 dev_dependencies:
   lints: ^4.0.0

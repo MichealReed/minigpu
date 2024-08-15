@@ -47,60 +47,6 @@ class Heap {
     }
     _heapF64.setRange(startIndex, endIndex, data);
   }
-
-  void copyAudioData(Pointer ptr, dynamic data, int format) {
-    if (data is ByteBuffer) {
-      data = _getTypedDataViewFromByteBuffer(data, format);
-    }
-
-    if (data is Float32List) {
-      copyFloat32List(ptr, data);
-    } else if (data is TypedData) {
-      switch (format) {
-        case AudioFormat.uint8:
-          copyUint8List(ptr, data as Uint8List);
-          break;
-        case AudioFormat.int16:
-          _copyInt16ListAsInt32(ptr, data as Int16List);
-          break;
-        case AudioFormat.int32:
-          copyInt32List(ptr, data as Int32List);
-          break;
-        default:
-          throw ArgumentError("Unsupported audio format: $format");
-      }
-    } else {
-      throw ArgumentError(
-          "Data must be either ByteBuffer, Float32List, or TypedData");
-    }
-  }
-
-  void _copyInt16ListAsInt32(Pointer ptr, Int16List data) {
-    final startIndex = ptr.addr ~/ 4;
-    final endIndex = startIndex + data.length;
-    if (endIndex > _heapI32.length) {
-      throw ArgumentError("Heap out of bounds");
-    }
-
-    for (int i = 0; i < data.length; i++) {
-      _heapI32[startIndex + i] = data[i];
-    }
-  }
-
-  TypedData _getTypedDataViewFromByteBuffer(ByteBuffer buffer, int format) {
-    switch (format) {
-      case AudioFormat.uint8:
-        return buffer.asUint8List();
-      case AudioFormat.int16:
-        return buffer.asInt16List();
-      case AudioFormat.int32:
-        return buffer.asInt32List();
-      case AudioFormat.float32:
-        return buffer.asFloat32List();
-      default:
-        throw ArgumentError("Unsupported audio format: $format");
-    }
-  }
 }
 
 const heap = Heap();

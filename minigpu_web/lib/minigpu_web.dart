@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 import 'package:minigpu_web/bindings/minigpu_bindings.dart' as wasm;
+import 'package:minigpu_web/bindings/wasm/wasm.dart';
 
 class MinigpuWeb extends MinigpuPlatform {
   @override
@@ -17,20 +18,22 @@ class MinigpuWeb extends MinigpuPlatform {
   @override
   PlatformComputeShader createComputeShader() {
     final shader = wasm.mgpuCreateComputeShader();
+    if (shader == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return WebComputeShader(shader);
   }
 
   @override
   PlatformBuffer createBuffer(
       PlatformComputeShader shader, int size, int memSize) {
-    final buffer =
-        wasm.mgpuCreateBuffer(shader as WebComputeShader, size, memSize);
+    final buffer = wasm.mgpuCreateBuffer(
+        (shader as WebComputeShader)._shader, size, memSize);
+    if (buffer == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return WebBuffer(buffer);
   }
 }
 
 class WebComputeShader implements PlatformComputeShader {
-  final wasm.MGPUComputeShader _shader;
+  final Pointer<wasm.MGPUComputeShader> _shader;
 
   WebComputeShader(this._shader);
 
@@ -51,7 +54,7 @@ class WebComputeShader implements PlatformComputeShader {
 
   @override
   void setBuffer(String kernel, String tag, PlatformBuffer buffer) {
-    wasm.mgpuSetBuffer(_shader, kernel, tag, buffer as WebBuffer);
+    wasm.mgpuSetBuffer(_shader, kernel, tag, (buffer as WebBuffer)._buffer);
   }
 
   @override
@@ -66,20 +69,33 @@ class WebComputeShader implements PlatformComputeShader {
 }
 
 class WebBuffer implements PlatformBuffer {
-  final wasm.MGPUBuffer _buffer;
+  final Pointer<wasm.MGPUBuffer> _buffer;
 
   WebBuffer(this._buffer);
 
   @override
   void readSync(PlatformBuffer otherBuffer) {
-    wasm.mgpuReadBufferSync(_buffer, otherBuffer as WebBuffer);
+    wasm.mgpuReadBufferSync(_buffer, (otherBuffer as WebBuffer)._buffer);
   }
 
   @override
   void readAsync(
       PlatformBuffer otherBuffer, void Function() callback, dynamic userData) {
     wasm.mgpuReadBufferAsync(
-        _buffer, otherBuffer as WebBuffer, allowInterop(callback), userData);
+        _buffer, (otherBuffer as WebBuffer)._buffer, callback, userData);
+  }
+
+  @override
+  void writeFloat32List(Float32List data) {
+    final list = wasm.mgpuCreateFloat32List(data.length);
+    heap.copyFloat32List(list, data);
+    wasm.mgpuCopyFloat32ListToBuffer(_buffer, list, data.length);
+    wasm.mgpuDestroyFloat32List(list);
+  }
+
+  @override
+  Float32List readFloat32List(int size) {
+    return wasm.mgpuCopyBufferToFloat32List(_buffer, size);
   }
 
   @override
