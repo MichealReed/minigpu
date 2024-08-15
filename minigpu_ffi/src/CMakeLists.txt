@@ -48,7 +48,7 @@ file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
     ${MAIN_PATH}/external/include/gpu/*
 )
 
-list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/*)
+list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/gpu/*)
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
 
 # Definitions
@@ -115,7 +115,6 @@ endif()
 
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 target_link_libraries(${MAIN_LIB} PRIVATE webgpu)
-target_include_directories(${MAIN_LIB} PRIVATE "${GPU_INCLUDE_DIR}")
 
 # Additional libs
 if(ANDROID)
