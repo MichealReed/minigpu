@@ -21,6 +21,7 @@ minigpu_DIR := .$(SLASH)minigpu$(SLASH)
 EXAMPLE_DIR := .$(SLASH)minigpu$(SLASH)example$(SLASH)
 SRC_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)
 BUILD_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)build$(SLASH)
+BUILD_WEB_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)build_web$(SLASH)
 VERSION ?= 1.0.0
 
 default: run
@@ -69,16 +70,21 @@ ffigen: init_submodules
 
 build_weblib: init_submodules
 	@echo "Building ffi lib to web via emscripten..."
-	@cd $(BUILD_DIR) && emcmake cmake .. && cmake --build .
+	@cd $(BUILD_WEB_DIR) && emcmake cmake .. && cmake --build .
 
 build_ffilib: init_submodules
 	@echo "Building ffi lib to native via emscripten..."
 	@cd $(BUILD_DIR) && cmake cmake .. --fresh && cmake --build .
 
-clean_lib:
+clean_ffi:
 	@echo "Cleaning lib dir..."
 	@$(DEL_CMD) "$(BUILD_DIR)*"
 	@$(RMDIR_CMD) "$(BUILD_DIR)*"
+
+clean_web:
+	@echo "Cleaning web lib dir..."
+	@$(DEL_CMD) "$(BUILD_WEB_DIR)*"
+	@$(RMDIR_CMD) "$(BUILD_WEB_DIR)*"
 
 help:
 	@echo "Available targets:"
