@@ -111,6 +111,8 @@
         "xmemory": "cpp",
         "xtr1common": "cpp",
         "xutility": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "resumable": "cpp",
+        "*.hpp11": "cpp"
     }
 }

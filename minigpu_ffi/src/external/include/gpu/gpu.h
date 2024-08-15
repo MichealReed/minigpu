@@ -755,20 +755,6 @@ inline Context createContext(const WGPUInstanceDescriptor &desc = {},
       devData.device = device;
       devData.requestEnded = true;
     };
-#if defined(WEBGPU_BACKEND_DAWN) && !defined(__EMSCRIPTEN__)
-    devDescriptor.deviceLostCallbackInfo = {
-        .callback =
-            [](WGPUDevice const *device, WGPUDeviceLostReason reason,
-               char const *message, void *userdata) {
-              if (reason != WGPUDeviceLostReason_Destroyed) {
-                LOG(kDefLog, kError, "Device lost (code %d):\n%s", reason,
-                    message);
-              } else {
-                LOG(kDefLog, kInfo, "Device destroyed: %s", message);
-              }
-            },
-    };
-#endif
     wgpuAdapterRequestDevice(context.adapter, &devDescriptor,
                              onDeviceRequestEnded, (void *)&devData);
     LOG(kDefLog, kInfo, "Waiting for device request to end");

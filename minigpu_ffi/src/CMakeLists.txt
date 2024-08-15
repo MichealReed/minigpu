@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(minigpu_ffi VERSION 1.0.0 LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Configure the find_root.cmake script
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
@@ -15,8 +17,9 @@ else()
 endif()
 
 #include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/webgpu.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/webgpu.cmake")
 
 if(NOT EMSCRIPTEN)
     set(MAIN_LIB minigpu_ffi)
@@ -42,10 +45,10 @@ file(GLOB_RECURSE MAIN_SOURCES
 target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
 
 file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
-    ${MAIN_PATH}/external/include/*
+    ${MAIN_PATH}/external/include/gpu/*
 )
 
-list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/)
+list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/*)
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
 
 # Definitions
@@ -55,10 +58,7 @@ target_compile_definitions(${MAIN_LIB} PUBLIC
 
 # Set properties
 if(NOT EMSCRIPTEN)
-    set_target_properties(${MAIN_LIB} PROPERTIES
-        PUBLIC_HEADER include/gpu.h
-        OUTPUT_NAME ${MAIN_LIB}
-    )
+
 else()
     set_target_properties(${MAIN_LIB} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${WEB_OUTPUT_DIR}
@@ -112,6 +112,10 @@ if(EMSCRIPTEN)
         COMMENT "Post-processing ${MAIN_LIB}.js"
     )
 endif()
+
+target_link_libraries(${MAIN_LIB} PRIVATE gpu)
+target_link_libraries(${MAIN_LIB} PRIVATE webgpu)
+target_include_directories(${MAIN_LIB} PRIVATE "${GPU_INCLUDE_DIR}")
 
 # Additional libs
 if(ANDROID)

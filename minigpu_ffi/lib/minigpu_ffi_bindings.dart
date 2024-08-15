@@ -28,11 +28,233 @@ class minigpuFfiBindings {
           lookup)
       : _lookup = lookup;
 
-  late final ffi.Pointer<ffi.Int> _mgpu = _lookup<ffi.Int>('mgpu');
+  void mgpuInitializeContext() {
+    return _mgpuInitializeContext();
+  }
 
-  int get mgpu => _mgpu.value;
+  late final _mgpuInitializeContextPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('mgpuInitializeContext');
+  late final _mgpuInitializeContext =
+      _mgpuInitializeContextPtr.asFunction<void Function()>();
 
-  set mgpu(int value) => _mgpu.value = value;
+  void mgpuDestroyContext() {
+    return _mgpuDestroyContext();
+  }
+
+  late final _mgpuDestroyContextPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('mgpuDestroyContext');
+  late final _mgpuDestroyContext =
+      _mgpuDestroyContextPtr.asFunction<void Function()>();
+
+  ffi.Pointer<MGPUComputeShader> mgpuCreateComputeShader() {
+    return _mgpuCreateComputeShader();
+  }
+
+  late final _mgpuCreateComputeShaderPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<MGPUComputeShader> Function()>>(
+          'mgpuCreateComputeShader');
+  late final _mgpuCreateComputeShader = _mgpuCreateComputeShaderPtr
+      .asFunction<ffi.Pointer<MGPUComputeShader> Function()>();
+
+  void mgpuDestroyComputeShader(
+    ffi.Pointer<MGPUComputeShader> shader,
+  ) {
+    return _mgpuDestroyComputeShader(
+      shader,
+    );
+  }
+
+  late final _mgpuDestroyComputeShaderPtr = _lookup<
+          ffi
+          .NativeFunction<ffi.Void Function(ffi.Pointer<MGPUComputeShader>)>>(
+      'mgpuDestroyComputeShader');
+  late final _mgpuDestroyComputeShader = _mgpuDestroyComputeShaderPtr
+      .asFunction<void Function(ffi.Pointer<MGPUComputeShader>)>();
+
+  void mgpuLoadKernelString(
+    ffi.Pointer<MGPUComputeShader> shader,
+    ffi.Pointer<ffi.Char> kernelString,
+  ) {
+    return _mgpuLoadKernelString(
+      shader,
+      kernelString,
+    );
+  }
+
+  late final _mgpuLoadKernelStringPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<MGPUComputeShader>,
+              ffi.Pointer<ffi.Char>)>>('mgpuLoadKernelString');
+  late final _mgpuLoadKernelString = _mgpuLoadKernelStringPtr.asFunction<
+      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>)>();
+
+  void mgpuLoadKernelFile(
+    ffi.Pointer<MGPUComputeShader> shader,
+    ffi.Pointer<ffi.Char> path,
+  ) {
+    return _mgpuLoadKernelFile(
+      shader,
+      path,
+    );
+  }
+
+  late final _mgpuLoadKernelFilePtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<MGPUComputeShader>,
+              ffi.Pointer<ffi.Char>)>>('mgpuLoadKernelFile');
+  late final _mgpuLoadKernelFile = _mgpuLoadKernelFilePtr.asFunction<
+      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>)>();
+
+  int mgpuHasKernel(
+    ffi.Pointer<MGPUComputeShader> shader,
+  ) {
+    return _mgpuHasKernel(
+      shader,
+    );
+  }
+
+  late final _mgpuHasKernelPtr = _lookup<
+          ffi.NativeFunction<ffi.Int Function(ffi.Pointer<MGPUComputeShader>)>>(
+      'mgpuHasKernel');
+  late final _mgpuHasKernel = _mgpuHasKernelPtr
+      .asFunction<int Function(ffi.Pointer<MGPUComputeShader>)>();
+
+  ffi.Pointer<MGPUBuffer> mgpuCreateBuffer(
+    ffi.Pointer<MGPUComputeShader> shader,
+    int size,
+    int memSize,
+  ) {
+    return _mgpuCreateBuffer(
+      shader,
+      size,
+      memSize,
+    );
+  }
+
+  late final _mgpuCreateBufferPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Pointer<MGPUBuffer> Function(ffi.Pointer<MGPUComputeShader>,
+              ffi.Int, ffi.Int)>>('mgpuCreateBuffer');
+  late final _mgpuCreateBuffer = _mgpuCreateBufferPtr.asFunction<
+      ffi.Pointer<MGPUBuffer> Function(
+          ffi.Pointer<MGPUComputeShader>, int, int)>();
+
+  void mgpuDestroyBuffer(
+    ffi.Pointer<MGPUBuffer> buffer,
+  ) {
+    return _mgpuDestroyBuffer(
+      buffer,
+    );
+  }
+
+  late final _mgpuDestroyBufferPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<MGPUBuffer>)>>(
+          'mgpuDestroyBuffer');
+  late final _mgpuDestroyBuffer = _mgpuDestroyBufferPtr
+      .asFunction<void Function(ffi.Pointer<MGPUBuffer>)>();
+
+  void mgpuSetBuffer(
+    ffi.Pointer<MGPUComputeShader> shader,
+    ffi.Pointer<ffi.Char> kernel,
+    ffi.Pointer<ffi.Char> tag,
+    ffi.Pointer<MGPUBuffer> buffer,
+  ) {
+    return _mgpuSetBuffer(
+      shader,
+      kernel,
+      tag,
+      buffer,
+    );
+  }
+
+  late final _mgpuSetBufferPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<MGPUComputeShader>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Pointer<MGPUBuffer>)>>('mgpuSetBuffer');
+  late final _mgpuSetBuffer = _mgpuSetBufferPtr.asFunction<
+      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>,
+          ffi.Pointer<ffi.Char>, ffi.Pointer<MGPUBuffer>)>();
+
+  void mgpuDispatch(
+    ffi.Pointer<MGPUComputeShader> shader,
+    ffi.Pointer<ffi.Char> kernel,
+    int groupsX,
+    int groupsY,
+    int groupsZ,
+  ) {
+    return _mgpuDispatch(
+      shader,
+      kernel,
+      groupsX,
+      groupsY,
+      groupsZ,
+    );
+  }
+
+  late final _mgpuDispatchPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<MGPUComputeShader>,
+              ffi.Pointer<ffi.Char>,
+              ffi.Int,
+              ffi.Int,
+              ffi.Int)>>('mgpuDispatch');
+  late final _mgpuDispatch = _mgpuDispatchPtr.asFunction<
+      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>, int,
+          int, int)>();
+
+  void mgpuReadBufferSync(
+    ffi.Pointer<MGPUBuffer> buffer,
+    ffi.Pointer<MGPUBuffer> otherBuffer,
+  ) {
+    return _mgpuReadBufferSync(
+      buffer,
+      otherBuffer,
+    );
+  }
+
+  late final _mgpuReadBufferSyncPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<MGPUBuffer>,
+              ffi.Pointer<MGPUBuffer>)>>('mgpuReadBufferSync');
+  late final _mgpuReadBufferSync = _mgpuReadBufferSyncPtr.asFunction<
+      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<MGPUBuffer>)>();
+
+  void mgpuReadBufferAsync(
+    ffi.Pointer<MGPUBuffer> buffer,
+    ffi.Pointer<MGPUBuffer> otherBuffer,
+    ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
+        callback,
+    ffi.Pointer<ffi.Void> userData,
+  ) {
+    return _mgpuReadBufferAsync(
+      buffer,
+      otherBuffer,
+      callback,
+      userData,
+    );
+  }
+
+  late final _mgpuReadBufferAsyncPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+              ffi.Pointer<MGPUBuffer>,
+              ffi.Pointer<MGPUBuffer>,
+              ffi.Pointer<
+                  ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>,
+              ffi.Pointer<ffi.Void>)>>('mgpuReadBufferAsync');
+  late final _mgpuReadBufferAsync = _mgpuReadBufferAsyncPtr.asFunction<
+      void Function(
+          ffi.Pointer<MGPUBuffer>,
+          ffi.Pointer<MGPUBuffer>,
+          ffi.Pointer<
+              ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>,
+          ffi.Pointer<ffi.Void>)>();
 }
+
+final class MGPUComputeShader extends ffi.Opaque {}
 
 final class MGPUBuffer extends ffi.Opaque {}
