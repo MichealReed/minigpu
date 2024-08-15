@@ -6,11 +6,13 @@ ifeq ($(OS),Windows_NT)
     DETECTED_OS := Windows
     DEL_CMD := del /s /q
 	RMDIR_CMD := rmdir /s /q
+	MKDIR_CMD := mkdir
     SLASH := \\
 else
     DETECTED_OS := $(shell uname)
     DEL_CMD := rm -rf
 	RMDIR_CMD := rm -rf
+	MKDIR_CMD := mkdir -p
     SLASH := /
 endif
 
@@ -76,15 +78,20 @@ build_ffilib: init_submodules
 	@echo "Building ffi lib to native via emscripten..."
 	@cd $(BUILD_DIR) && cmake cmake .. --fresh && cmake --build .
 
-clean_ffi:
-	@echo "Cleaning lib dir..."
-	@$(DEL_CMD) "$(BUILD_DIR)*"
-	@$(RMDIR_CMD) "$(BUILD_DIR)*"
-
-clean_web:
+clean_weblib:
 	@echo "Cleaning web lib dir..."
 	@$(DEL_CMD) "$(BUILD_WEB_DIR)*"
 	@$(RMDIR_CMD) "$(BUILD_WEB_DIR)*"
+
+clean_ffilib:
+	@echo "Cleaning lib dir..."
+	@$(RMDIR_CMD) "$(BUILD_DIR)"
+	@$(MKDIR_CMD) "$(BUILD_DIR)"
+
+clean_weblib:
+	@echo "Cleaning web lib dir..."
+	@$(RMDIR_CMD) "$(BUILD_WEB_DIR)"
+	@$(MKDIR_CMD) "$(BUILD_WEB_DIR)"
 
 help:
 	@echo "Available targets:"
