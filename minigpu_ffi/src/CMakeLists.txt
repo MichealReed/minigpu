@@ -48,7 +48,18 @@ file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
     ${MAIN_PATH}/external/include/gpu/*
 )
 
-list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/gpu/*)
+if(NOT EMSCRIPTEN)
+    list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/gpu/*)
+else()
+    # Exclude webgpu/webgpu.h when using Emscripten
+    list(APPEND MAIN_INCLUDES
+        ${MAIN_PATH}/include/gpu/gpu.h
+        ${MAIN_PATH}/include/gpu/utils/logging.h
+        ${MAIN_PATH}/include/gpu/utils/array_utils.h
+        ${MAIN_PATH}/include/gpu/numeric_types/half.h
+    )
+endif()
+
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
 
 # Definitions
