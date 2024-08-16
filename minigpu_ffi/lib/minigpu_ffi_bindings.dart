@@ -208,31 +208,35 @@ class minigpuFfiBindings {
 
   void mgpuReadBufferSync(
     ffi.Pointer<MGPUBuffer> buffer,
-    ffi.Pointer<MGPUBuffer> otherBuffer,
+    ffi.Pointer<ffi.Void> outputData,
+    int size,
   ) {
     return _mgpuReadBufferSync(
       buffer,
-      otherBuffer,
+      outputData,
+      size,
     );
   }
 
   late final _mgpuReadBufferSyncPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<MGPUBuffer>,
-              ffi.Pointer<MGPUBuffer>)>>('mgpuReadBufferSync');
+          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>,
+              ffi.Size)>>('mgpuReadBufferSync');
   late final _mgpuReadBufferSync = _mgpuReadBufferSyncPtr.asFunction<
-      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<MGPUBuffer>)>();
+      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>, int)>();
 
   void mgpuReadBufferAsync(
     ffi.Pointer<MGPUBuffer> buffer,
-    ffi.Pointer<MGPUBuffer> otherBuffer,
+    ffi.Pointer<ffi.Void> outputData,
+    int size,
     ffi.Pointer<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>
         callback,
     ffi.Pointer<ffi.Void> userData,
   ) {
     return _mgpuReadBufferAsync(
       buffer,
-      otherBuffer,
+      outputData,
+      size,
       callback,
       userData,
     );
@@ -242,17 +246,38 @@ class minigpuFfiBindings {
       ffi.NativeFunction<
           ffi.Void Function(
               ffi.Pointer<MGPUBuffer>,
-              ffi.Pointer<MGPUBuffer>,
+              ffi.Pointer<ffi.Void>,
+              ffi.Size,
               ffi.Pointer<
                   ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>,
               ffi.Pointer<ffi.Void>)>>('mgpuReadBufferAsync');
   late final _mgpuReadBufferAsync = _mgpuReadBufferAsyncPtr.asFunction<
       void Function(
           ffi.Pointer<MGPUBuffer>,
-          ffi.Pointer<MGPUBuffer>,
+          ffi.Pointer<ffi.Void>,
+          int,
           ffi.Pointer<
               ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>,
           ffi.Pointer<ffi.Void>)>();
+
+  void mgpuSetBufferData(
+    ffi.Pointer<MGPUBuffer> buffer,
+    ffi.Pointer<ffi.Void> inputData,
+    int size,
+  ) {
+    return _mgpuSetBufferData(
+      buffer,
+      inputData,
+      size,
+    );
+  }
+
+  late final _mgpuSetBufferDataPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>,
+              ffi.Size)>>('mgpuSetBufferData');
+  late final _mgpuSetBufferData = _mgpuSetBufferDataPtr.asFunction<
+      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>, int)>();
 }
 
 final class MGPUComputeShader extends ffi.Opaque {}

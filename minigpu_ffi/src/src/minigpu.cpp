@@ -1,10 +1,7 @@
 #include "../include/minigpu.h"
 
-
 using namespace mgpu;
 using namespace gpu;
-
-
 
 extern "C"
 {
@@ -83,6 +80,7 @@ extern "C"
     {
         if (buffer)
         {
+            reinterpret_cast<mgpu::Buffer *>(buffer)->release();
             delete reinterpret_cast<mgpu::Buffer *>(buffer);
         }
         else
@@ -115,27 +113,39 @@ extern "C"
         }
     }
 
-    void mgpuReadBufferSync(MGPUBuffer *buffer, MGPUBuffer *otherBuffer)
+    void mgpuReadBufferSync(MGPUBuffer *buffer, void *outputData, size_t size)
     {
-        if (buffer && otherBuffer)
+        if (buffer && outputData)
         {
-            reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer));
+            reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(outputData, size);
         }
         else
         {
-            LOG(kDefLog, kError, "Invalid buffer or otherBuffer pointer");
+            LOG(kDefLog, kError, "Invalid buffer or outputData pointer");
         }
     }
 
-    void mgpuReadBufferAsync(MGPUBuffer *buffer, MGPUBuffer *otherBuffer, void (*callback)(void *), void *userData)
+    void mgpuReadBufferAsync(MGPUBuffer *buffer, void *outputData, size_t size, void (*callback)(void *), void *userData)
     {
-        if (buffer && otherBuffer && callback)
+        if (buffer && outputData && callback)
         {
-            reinterpret_cast<mgpu::Buffer *>(buffer)->requestAsync(*reinterpret_cast<mgpu::Buffer *>(otherBuffer), callback, userData);
+            reinterpret_cast<mgpu::Buffer *>(buffer)->readAsync(outputData, size, callback, userData);
         }
         else
         {
-            LOG(kDefLog, kError, "Invalid buffer, otherBuffer, or callback pointer");
+            LOG(kDefLog, kError, "Invalid buffer, outputData, or callback pointer");
+        }
+    }
+
+    void mgpuSetBufferData(MGPUBuffer *buffer, const void *inputData, size_t size)
+    {
+        if (buffer && inputData)
+        {
+            reinterpret_cast<mgpu::Buffer *>(buffer)->setData(inputData, size);
+        }
+        else
+        {
+            LOG(kDefLog, kError, "Invalid buffer or inputData pointer");
         }
     }
 

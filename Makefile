@@ -64,8 +64,7 @@ run_device: init_submodules
 
 run_web: build_weblib
 	@echo "󰐊 Running web example..."
-	@cd $(EXAMPLE_DIR) && flutter run -d chrome --web-browser-flag --enable-features=SharedArrayBuffer
-
+	@cd $(EXAMPLE_DIR) && flutter run -d chrome --web-browser-flag "--enable-features=SharedArrayBuffer" --web-browser-flag "--enable-unsafe-webgpu" --web-browser-flag "--disable-dawn-features=diallow_unsafe_apis"
 ffigen: init_submodules
 	@echo "Generating dart ffi bindings..."
 	@cd $(FFI_DIR) && dart run ffigen
