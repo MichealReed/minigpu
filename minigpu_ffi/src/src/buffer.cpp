@@ -12,7 +12,7 @@ namespace mgpu
 
     void initializeContext()
     {
-        ctx = gpu::createContext({});
+        ctx = gpu::createContext();
     }
 
     void destroyContext()

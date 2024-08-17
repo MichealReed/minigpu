@@ -1,6 +1,4 @@
-import "dart:typed_data";
-
-import "package:minigpu_platform_interface/minigpu_platform_interface.dart";
+import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 
 /// Controls the initialization and destruction of the minigpu context.
 final class Minigpu {
@@ -54,9 +52,6 @@ final class ComputeShader {
   void loadKernelString(String kernelString) =>
       _shader.loadKernelString(kernelString);
 
-  /// Loads a kernel file into the shader.
-  void loadKernelFile(String path) => _shader.loadKernelFile(path);
-
   /// Checks if the shader has a kernel loaded.
   bool hasKernel() => _shader.hasKernel();
 
@@ -78,19 +73,17 @@ final class Buffer {
 
   final PlatformBuffer _buffer;
 
-  /// Reads data from another buffer synchronously.
-  void readSync(Buffer otherBuffer) => _buffer.readSync(otherBuffer._buffer);
+  /// Reads data from the buffer synchronously.
+  void readSync(dynamic outputData, int size) =>
+      _buffer.readSync(outputData, size);
 
-  /// Reads data from another buffer asynchronously.
-  void readAsync(
-          Buffer otherBuffer, void Function() callback, dynamic userData) =>
-      _buffer.readAsync(otherBuffer._buffer, callback, userData);
+  /// Reads data from the buffer asynchronously.
+  void readAsync(dynamic outputData, int size, void Function() callback,
+          dynamic userData) =>
+      _buffer.readAsync(outputData, size, callback, userData);
 
-  /// Writes a Float32List to the buffer.
-  void writeFloat32List(Float32List data) => _buffer.writeFloat32List(data);
-
-  /// Reads a Float32List from the buffer.
-  Float32List readFloat32List(int size) => _buffer.readFloat32List(size);
+  /// Writes data to the buffer.
+  void setData(dynamic inputData, int size) => _buffer.setData(inputData, size);
 
   /// Destroys the buffer.
   void destroy() => _buffer.destroy();
@@ -103,6 +96,6 @@ class MinigpuAlreadyInitError extends Error {
 
   @override
   String toString() => message == null
-      ? "Minigpu already initialized"
-      : "Minigpu already initialized: $message";
+      ? 'Minigpu already initialized'
+      : 'Minigpu already initialized: $message';
 }

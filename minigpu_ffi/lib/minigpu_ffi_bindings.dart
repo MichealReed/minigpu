@@ -71,38 +71,21 @@ class minigpuFfiBindings {
   late final _mgpuDestroyComputeShader = _mgpuDestroyComputeShaderPtr
       .asFunction<void Function(ffi.Pointer<MGPUComputeShader>)>();
 
-  void mgpuLoadKernelString(
+  void mgpuLoadKernel(
     ffi.Pointer<MGPUComputeShader> shader,
     ffi.Pointer<ffi.Char> kernelString,
   ) {
-    return _mgpuLoadKernelString(
+    return _mgpuLoadKernel(
       shader,
       kernelString,
     );
   }
 
-  late final _mgpuLoadKernelStringPtr = _lookup<
+  late final _mgpuLoadKernelPtr = _lookup<
       ffi.NativeFunction<
           ffi.Void Function(ffi.Pointer<MGPUComputeShader>,
-              ffi.Pointer<ffi.Char>)>>('mgpuLoadKernelString');
-  late final _mgpuLoadKernelString = _mgpuLoadKernelStringPtr.asFunction<
-      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>)>();
-
-  void mgpuLoadKernelFile(
-    ffi.Pointer<MGPUComputeShader> shader,
-    ffi.Pointer<ffi.Char> path,
-  ) {
-    return _mgpuLoadKernelFile(
-      shader,
-      path,
-    );
-  }
-
-  late final _mgpuLoadKernelFilePtr = _lookup<
-      ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<MGPUComputeShader>,
-              ffi.Pointer<ffi.Char>)>>('mgpuLoadKernelFile');
-  late final _mgpuLoadKernelFile = _mgpuLoadKernelFilePtr.asFunction<
+              ffi.Pointer<ffi.Char>)>>('mgpuLoadKernel');
+  late final _mgpuLoadKernel = _mgpuLoadKernelPtr.asFunction<
       void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>)>();
 
   int mgpuHasKernel(

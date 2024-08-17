@@ -17,8 +17,7 @@ extern "C"
     EXPORT void mgpuDestroyContext();
     EXPORT MGPUComputeShader *mgpuCreateComputeShader();
     EXPORT void mgpuDestroyComputeShader(MGPUComputeShader *shader);
-    EXPORT void mgpuLoadKernelString(MGPUComputeShader *shader, const char *kernelString);
-    EXPORT void mgpuLoadKernelFile(MGPUComputeShader *shader, const char *path);
+    EXPORT void mgpuLoadKernel(MGPUComputeShader *shader, const char *kernelString);
     EXPORT int mgpuHasKernel(MGPUComputeShader *shader);
     EXPORT MGPUBuffer *mgpuCreateBuffer(MGPUComputeShader *shader, int size, int memSize);
     EXPORT void mgpuDestroyBuffer(MGPUBuffer *buffer);

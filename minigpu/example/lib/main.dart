@@ -37,21 +37,28 @@ class _MinigpuExampleState extends State<MinigpuExample> {
 
   Future<void> _initMinigpu() async {
     _minigpu = Minigpu();
-    await _minigpu.init();
+    //await _minigpu.init();
 
-    _shader = _minigpu.createComputeShader();
-    await _shader.loadKernelAsset('assets/kernels/example.cl');
+    //_shader = _minigpu.createComputeShader();
+    //_shader.loadKernelString('''
+    //  kernel void myKernel(global float* buffer) {
+    //    const int index = get_global_id(0);
+    //    buffer[index] = index * 2.0f;
+    //  }
+    // ''');
 
     final bufferSize = 1024;
     final memSize = bufferSize * Float32List.bytesPerElement;
-    _buffer = _minigpu.createBuffer(_shader, bufferSize, memSize);
+    //_buffer = _minigpu.createBuffer(_shader, bufferSize, memSize);
 
-    _shader.setBuffer('myKernel', 'buffer', _buffer);
-    _shader.dispatch('myKernel', 1024, 1, 1);
+    //_shader.setBuffer('myKernel', 'buffer', _buffer);
+    //_shader.dispatch('myKernel', 1024, 1, 1);
 
-    final result = _buffer.readFloat32List(bufferSize);
+    //final outputData = Float32List(bufferSize);
+    //_buffer.readSync(outputData, memSize);
+
     setState(() {
-      _result = result;
+      //_result = outputData.map((value) => value.toDouble()).toList();
     });
   }
 
@@ -65,6 +72,11 @@ class _MinigpuExampleState extends State<MinigpuExample> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ElevatedButton(
+                onPressed: () async {
+                  await _minigpu.init();
+                },
+                child: Text('Initialize')),
             Text(
               'Result:',
               style: TextStyle(fontSize: 24),

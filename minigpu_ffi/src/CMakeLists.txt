@@ -3,6 +3,9 @@ project(minigpu_ffi VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+#enable exports
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 # Configure the find_root.cmake script
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
 
@@ -42,7 +45,6 @@ file(GLOB_RECURSE MAIN_SOURCES
     ${MAIN_PATH}/src/*.cpp
 )
 
-target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
 
 file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
     ${MAIN_PATH}/external/include/gpu/*
@@ -124,8 +126,27 @@ if(EMSCRIPTEN)
     )
 endif()
 
+set(TEST_SOURCES
+    ${MAIN_PATH}/test/minigpu_test.cpp
+)
+
+If(NOT EMSCRIPTEN)
+add_executable(minigpu_test ${TEST_SOURCES})
+target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES} ${TEST_SOURCES})
+else()
+target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
+endif()
+
+
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 target_link_libraries(${MAIN_LIB} PRIVATE webgpu)
+
+if(NOT EMSCRIPTEN)
+target_link_libraries(minigpu_test PRIVATE gpu)
+target_link_libraries(minigpu_test PRIVATE webgpu)
+target_link_libraries(minigpu_test PRIVATE ${MAIN_LIB})
+endif()
+
 
 # Additional libs
 if(ANDROID)

@@ -1,10 +1,11 @@
 #include "../include/minigpu.h"
-
+#ifdef __cplusplus
 using namespace mgpu;
 using namespace gpu;
-
 extern "C"
 {
+#endif
+
     void mgpuInitializeContext()
     {
         initializeContext();
@@ -25,7 +26,7 @@ extern "C"
         delete reinterpret_cast<mgpu::ComputeShader *>(shader);
     }
 
-    void mgpuLoadKernelString(MGPUComputeShader *shader, const char *kernelString)
+    void mgpuLoadKernel(MGPUComputeShader *shader, const char *kernelString)
     {
         if (shader && kernelString)
         {
@@ -34,18 +35,6 @@ extern "C"
         else
         {
             gpu::LOG(kDefLog, kError, "Invalid shader or kernelString pointer");
-        }
-    }
-
-    void mgpuLoadKernelFile(MGPUComputeShader *shader, const char *path)
-    {
-        if (shader && path)
-        {
-            reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelFile(path);
-        }
-        else
-        {
-            LOG(kDefLog, kError, "Invalid shader or path pointer");
         }
     }
 
@@ -149,4 +138,6 @@ extern "C"
         }
     }
 
-} // extern "C"
+#ifdef __cplusplus
+}
+#endif// extern "C"

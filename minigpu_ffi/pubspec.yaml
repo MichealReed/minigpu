@@ -57,16 +57,16 @@ flutter:
     platforms:
       android:
         ffiPlugin: true
-        dartPluginClass: minigpuFfi
+        dartPluginClass: MinigpuFfi
       ios:
         ffiPlugin: true
-        dartPluginClass: minigpuFfi
+        dartPluginClass: MinigpuFfi
       linux:
         ffiPlugin: true
-        dartPluginClass: minigpuFfi
+        dartPluginClass: MinigpuFfi
       macos:
         ffiPlugin: true
-        dartPluginClass: minigpuFfi
+        dartPluginClass: MinigpuFfi
       windows:
         ffiPlugin: true
-        dartPluginClass: minigpuFfi
+        dartPluginClass: MinigpuFfi

@@ -1,24 +1,27 @@
 // ignore_for_file: omit_local_variable_types
 
-import "dart:ffi";
-import "dart:io";
-import "dart:typed_data";
+import 'dart:async';
+import 'dart:ffi';
+import 'dart:io';
 
-import "package:ffi/ffi.dart";
-import "package:minigpu_ffi/minigpu_ffi_bindings.dart" as ffi;
-import "package:minigpu_platform_interface/minigpu_platform_interface.dart";
+import 'package:ffi/ffi.dart';
+import 'package:minigpu_ffi/minigpu_ffi_bindings.dart' as ffi;
+import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 
 // Dynamic library
-const String _libName = "minigpu_ffi";
+const String _libName = 'minigpu_ffi';
+
+typedef ReadAsyncCallbackFunc = Void Function(Pointer<Void>);
+typedef ReadAsyncCallback = Pointer<NativeFunction<ReadAsyncCallbackFunc>>;
 final _bindings = ffi.minigpuFfiBindings(() {
   if (Platform.isMacOS || Platform.isIOS) {
-    return DynamicLibrary.open("$_libName.framework/$_libName");
+    return DynamicLibrary.open('$_libName.framework/$_libName');
   } else if (Platform.isAndroid || Platform.isLinux) {
-    return DynamicLibrary.open("lib$_libName.so");
+    return DynamicLibrary.open('lib$_libName.so');
   } else if (Platform.isWindows) {
-    return DynamicLibrary.open("$_libName.dll");
+    return DynamicLibrary.open('$_libName.dll');
   }
-  throw UnsupportedError("Unsupported platform: ${Platform.operatingSystem}");
+  throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
 }());
 
 // Minigpu FFI
@@ -64,19 +67,9 @@ final class FfiComputeShader implements PlatformComputeShader {
   void loadKernelString(String kernelString) {
     final kernelStringPtr = kernelString.toNativeUtf8();
     try {
-      _bindings.mgpuLoadKernelString(_self, kernelStringPtr.cast());
+      _bindings.mgpuLoadKernel(_self, kernelStringPtr.cast());
     } finally {
       malloc.free(kernelStringPtr);
-    }
-  }
-
-  @override
-  void loadKernelFile(String path) {
-    final pathPtr = path.toNativeUtf8();
-    try {
-      _bindings.mgpuLoadKernelFile(_self, pathPtr.cast());
-    } finally {
-      malloc.free(pathPtr);
     }
   }
 
@@ -121,39 +114,38 @@ final class FfiBuffer implements PlatformBuffer {
 
   final Pointer<ffi.MGPUBuffer> _self;
 
-  @override
-  void readSync(PlatformBuffer otherBuffer) {
-    _bindings.mgpuReadBufferSync(_self, (otherBuffer as FfiBuffer)._self);
+  static final Map<int, Completer<void>> _completers = {};
+
+  static void _readAsyncCallback(Pointer<Void> userData) {
+    final callbackId = userData.address;
+    final completer = _completers.remove(callbackId);
+    if (completer != null) {
+      completer.complete();
+    }
   }
 
   @override
-  void readAsync(
-      PlatformBuffer otherBuffer, void Function() callback, dynamic userData) {
-    final callbackPtr = Pointer.fromFunction<Void Function(Pointer<Void>)>(
-        (Pointer<Void> userData) {
-      callback();
-    });
+  void readSync(dynamic outputData, int size) {
+    _bindings.mgpuReadBufferSync(_self, outputData, size);
+  }
+
+  @override
+  Future<void> readAsync(dynamic outputData, int size, void Function() callback,
+      dynamic userData) {
+    final completer = Completer<void>();
+    final callbackId = identical(userData, null) ? 0 : userData.hashCode;
+    _completers[callbackId] = completer;
+    final callbackPtr =
+        Pointer.fromFunction<ReadAsyncCallbackFunc>(_readAsyncCallback);
+    final userDataPtr = Pointer<Void>.fromAddress(callbackId);
     _bindings.mgpuReadBufferAsync(
-        _self, (otherBuffer as FfiBuffer)._self, callbackPtr, userData.cast());
+        _self, outputData, size, callbackPtr, userDataPtr);
+    return completer.future.then((_) => callback());
   }
 
   @override
-  void writeFloat32List(Float32List data) {
-    final dataPtr = malloc.allocate<Float>(data.length);
-    final dataList = dataPtr.asTypedList(data.length);
-    dataList.setAll(0, data);
-    _bindings.mgpuWriteFloat32List(_self, dataPtr, data.length);
-    malloc.free(dataPtr);
-  }
-
-  @override
-  Float32List readFloat32List(int size) {
-    final dataPtr = malloc.allocate<Float>(size);
-    _bindings.mgpuReadFloat32List(_self, dataPtr, size);
-    final dataList = dataPtr.asTypedList(size);
-    final result = Float32List.fromList(dataList);
-    malloc.free(dataPtr);
-    return result;
+  void setData(dynamic inputData, int size) {
+    _bindings.mgpuSetBufferData(_self, inputData, size);
   }
 
   @override

@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class MinigpuPlatform extends PlatformInterface {
@@ -25,7 +23,6 @@ abstract class MinigpuPlatform extends PlatformInterface {
 
 abstract class PlatformComputeShader {
   void loadKernelString(String kernelString);
-  void loadKernelFile(String path);
   bool hasKernel();
   void setBuffer(String kernel, String tag, PlatformBuffer buffer);
   void dispatch(String kernel, int groupsX, int groupsY, int groupsZ);
@@ -33,14 +30,13 @@ abstract class PlatformComputeShader {
 }
 
 abstract class PlatformBuffer {
-  void readSync(PlatformBuffer otherBuffer);
+  void readSync(dynamic outputData, int size);
   void readAsync(
-      PlatformBuffer otherBuffer, void Function() callback, dynamic userData);
-  void writeFloat32List(Float32List data);
-  Float32List readFloat32List(int size);
+      dynamic outputData, int size, void Function() callback, dynamic userData);
+  void setData(dynamic inputData, int size);
   void destroy();
 }
 
 final class MinigpuPlatformOutOfMemoryException implements Exception {
-  String toString() => "Out of memory";
+  String toString() => 'Out of memory';
 }
