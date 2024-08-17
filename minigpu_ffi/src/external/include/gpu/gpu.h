@@ -650,7 +650,6 @@ inline void check(bool condition, const char *message,
                   const char *file = "unkown", int line = -1) {
   if (!condition) {
     LOG(kDefLog, kError, "Error in file %s line %d:\n%s", file, line, message);
-    exit(1);
   } else {
     LOG(kDefLog, kTrace, "Success in file %s line %d:\n%s", file, line,
         message);

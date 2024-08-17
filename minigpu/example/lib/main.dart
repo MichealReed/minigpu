@@ -32,12 +32,11 @@ class _MinigpuExampleState extends State<MinigpuExample> {
   @override
   void initState() {
     super.initState();
-    _initMinigpu();
+    _minigpu = Minigpu();
   }
 
   Future<void> _initMinigpu() async {
-    _minigpu = Minigpu();
-    //await _minigpu.init();
+    await _minigpu.init();
 
     //_shader = _minigpu.createComputeShader();
     //_shader.loadKernelString('''
@@ -94,8 +93,8 @@ class _MinigpuExampleState extends State<MinigpuExample> {
 
   @override
   void dispose() {
-    _buffer.destroy();
-    _shader.destroy();
+    // _buffer.destroy();
+    //_shader.destroy();
     super.dispose();
   }
 }

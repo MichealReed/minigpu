@@ -12,6 +12,7 @@ namespace mgpu
 
     void initializeContext()
     {
+        //gpu::setLogLevel(0);
         ctx = gpu::createContext();
     }
 
