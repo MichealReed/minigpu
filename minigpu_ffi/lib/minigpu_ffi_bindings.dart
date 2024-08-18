@@ -242,7 +242,7 @@ class minigpuFfiBindings {
 
   void mgpuSetBufferData(
     ffi.Pointer<MGPUBuffer> buffer,
-    ffi.Pointer<ffi.Void> inputData,
+    ffi.Pointer<ffi.Float> inputData,
     int size,
   ) {
     return _mgpuSetBufferData(
@@ -254,10 +254,10 @@ class minigpuFfiBindings {
 
   late final _mgpuSetBufferDataPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>,
+          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Float>,
               ffi.Size)>>('mgpuSetBufferData');
   late final _mgpuSetBufferData = _mgpuSetBufferDataPtr.asFunction<
-      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>, int)>();
+      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Float>, int)>();
 }
 
 final class MGPUComputeShader extends ffi.Opaque {}

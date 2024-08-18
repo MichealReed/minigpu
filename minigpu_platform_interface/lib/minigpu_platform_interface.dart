@@ -34,7 +34,7 @@ abstract class PlatformBuffer {
   void readSync(dynamic outputData, int size);
   void readAsync(dynamic outputData, int size,
       void Function(Float32List) callback, dynamic userData);
-  void setData(dynamic inputData, int size);
+  void setData(Float32List inputData, int size);
   void destroy();
 }
 

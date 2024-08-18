@@ -84,7 +84,7 @@ namespace mgpu
         callback(userData);
     }
 
-    void Buffer::setData(const void *inputData, size_t size)
+    void Buffer::setData(const float *inputData, size_t size)
     {
         // Ensure the buffer size is sufficient
         if (size > bufferData.size)
@@ -93,8 +93,13 @@ namespace mgpu
             return;
         }
 
+        createBuffer(size /4, size);
+
+        LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer last: %d, size: %d", bufferData.buffer, size);
+        LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %d, size: %d", inputData, size);
+
         // Copy the input data to the buffer using gpu::toGPU
-        gpu::toGPU(this->mgpu.ctx, inputData, bufferData.buffer, size);
+        gpu::toGPU(this->mgpu.ctx, inputData, bufferData.buffer, size * sizeof(float));
     }
 
     void Buffer::release()

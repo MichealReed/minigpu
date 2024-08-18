@@ -143,8 +143,12 @@ final class FfiBuffer implements PlatformBuffer {
   }
 
   @override
-  void setData(dynamic inputData, int size) {
-    _bindings.mgpuSetBufferData(_self, inputData, size);
+  void setData(Float32List inputData, int size) {
+    final inputPtr = malloc.allocate<Float>(inputData.length * 8);
+    final inputTypedList = inputPtr.asTypedList(size);
+    inputTypedList.setAll(0, inputData);
+    _bindings.mgpuSetBufferData(_self, inputPtr, size);
+    malloc.free(inputPtr);
   }
 
   @override

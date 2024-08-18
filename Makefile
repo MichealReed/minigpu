@@ -40,7 +40,7 @@ clean:
 	@echo "󰃢 Cleaning Example."
 	@cd $(EXAMPLE_DIR) && flutter clean
 
-run:
+run: clean
 ifeq ($(DETECTED_OS), Windows)
 	@echo "󰐊 Running example on Windows..."
 	@cd $(EXAMPLE_DIR) && cmd /c flutter run -d Windows

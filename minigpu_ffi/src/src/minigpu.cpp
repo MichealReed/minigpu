@@ -129,11 +129,14 @@ extern "C"
         }
     }
 
-    void mgpuSetBufferData(MGPUBuffer *buffer, const void *inputData, size_t size)
+    void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData, size_t size)
     {
+        printf("mgpuSetBufferData called\n");
+        printf("buffer: %p\n", buffer);
         if (buffer && inputData)
         {
             reinterpret_cast<mgpu::Buffer *>(buffer)->setData(inputData, size);
+            LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f", inputData[size - 1]);
         }
         else
         {
