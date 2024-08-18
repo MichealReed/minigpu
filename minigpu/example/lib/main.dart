@@ -38,26 +38,26 @@ class _MinigpuExampleState extends State<MinigpuExample> {
   Future<void> _initMinigpu() async {
     await _minigpu.init();
 
-    //_shader = _minigpu.createComputeShader();
-    //_shader.loadKernelString('''
-    //  kernel void myKernel(global float* buffer) {
-    //    const int index = get_global_id(0);
-    //    buffer[index] = index * 2.0f;
-    //  }
-    // ''');
+    _shader = _minigpu.createComputeShader();
+    _shader.loadKernelString('''
+     kernel void myKernel(global float* buffer) {
+       const int index = get_global_id(0);
+      buffer[index] = index * 2.0f;
+    }
+   ''');
 
     final bufferSize = 1024;
     final memSize = bufferSize * Float32List.bytesPerElement;
-    //_buffer = _minigpu.createBuffer(_shader, bufferSize, memSize);
+    _buffer = _minigpu.createBuffer(_shader, bufferSize, memSize);
 
-    //_shader.setBuffer('myKernel', 'buffer', _buffer);
-    //_shader.dispatch('myKernel', 1024, 1, 1);
+    _shader.setBuffer('myKernel', 'buffer', _buffer);
+    _shader.dispatch('myKernel', 1024, 1, 1);
 
-    //final outputData = Float32List(bufferSize);
-    //_buffer.readSync(outputData, memSize);
+    final outputData = Float32List(bufferSize);
+    _buffer.readSync(outputData, memSize);
 
     setState(() {
-      //_result = outputData.map((value) => value.toDouble()).toList();
+      _result = outputData.map((value) => value.toDouble()).toList();
     });
   }
 

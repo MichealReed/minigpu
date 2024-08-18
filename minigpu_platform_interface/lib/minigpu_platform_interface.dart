@@ -17,8 +17,7 @@ abstract class MinigpuPlatform extends PlatformInterface {
   void initializeContext();
   void destroyContext();
   PlatformComputeShader createComputeShader();
-  PlatformBuffer createBuffer(
-      PlatformComputeShader shader, int size, int memSize);
+  PlatformBuffer createBuffer(int size, int memSize);
 }
 
 abstract class PlatformComputeShader {

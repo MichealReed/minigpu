@@ -8,6 +8,7 @@ namespace mgpu
     class ComputeShader
     {
     public:
+        ComputeShader(MGPU &mgpu);
         void loadKernelString(const std::string &kernelString);
         void loadKernelFile(const std::string &path);
         bool hasKernel() const;
@@ -17,6 +18,7 @@ namespace mgpu
     private:
         gpu::KernelCode code;
         std::vector<gpu::Tensor> bindings;
+        MGPU &mgpu;
     };
 }
 

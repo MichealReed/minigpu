@@ -8,20 +8,18 @@ using namespace gpu;
 
 namespace mgpu
 {
-    gpu::Context ctx;
-
-    void initializeContext()
+    void MGPU::initializeContext()
     {
         // gpu::setLogLevel(0);
-        ctx = gpu::createContext();
+        this->ctx = gpu::createContext();
     }
 
-    void destroyContext()
+    void MGPU::destroyContext()
     {
-        delete &ctx;
+        delete &this->ctx;
     }
 
-    Buffer::Buffer(gpu::Array buffer) : bufferData(buffer) {}
+    Buffer::Buffer(gpu::Array buffer, MGPU& mgpu) : bufferData(buffer), mgpu(mgpu) {}
 
     gpu::Array Buffer::createBuffer(int size, int memSize)
     {
@@ -30,7 +28,7 @@ namespace mgpu
             .usage = usage,
             .size = static_cast<uint64_t>(memSize),
         };
-        WGPUBuffer buffer = wgpuDeviceCreateBuffer(ctx.device, &descriptor);
+        WGPUBuffer buffer = wgpuDeviceCreateBuffer(this->mgpu.ctx.device, &descriptor);
         gpu::Array array = {
             .buffer = buffer,
             .usage = usage,
@@ -42,7 +40,7 @@ namespace mgpu
     void Buffer::readSync(void *outputData, size_t size)
     {
         gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
-        gpu::toCPU(ctx, tensor, outputData, size);
+        gpu::toCPU(this->mgpu.ctx, tensor, outputData, size);
     }
 
     void Buffer::readAsync(void *outputData, size_t size, std::function<void(void *)> callback, void *userData)
@@ -55,20 +53,20 @@ namespace mgpu
                 .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead,
                 .size = size,
             };
-            op.readbackBuffer = wgpuDeviceCreateBuffer(ctx.device, &readbackBufferDescriptor);
+            op.readbackBuffer = wgpuDeviceCreateBuffer(this->mgpu.ctx.device, &readbackBufferDescriptor);
         }
         {
             WGPUCommandEncoder commandEncoder;
             WGPUComputePassEncoder computePassEncoder;
-            commandEncoder = wgpuDeviceCreateCommandEncoder(ctx.device, nullptr);
+            commandEncoder = wgpuDeviceCreateCommandEncoder(this->mgpu.ctx.device, nullptr);
             wgpuCommandEncoderCopyBufferToBuffer(commandEncoder, tensor.data.buffer, 0,
                                                  op.readbackBuffer, 0, size);
             op.commandBuffer = wgpuCommandEncoderFinish(commandEncoder, nullptr);
             check(op.commandBuffer, "Create command buffer", __FILE__, __LINE__);
         }
         gpu::CallbackData callbackData = {op.readbackBuffer, size, outputData, &op.promise, &op.future};
-        wgpuQueueSubmit(ctx.queue, 1, &op.commandBuffer);
-        wgpuQueueOnSubmittedWorkDone(ctx.queue, [](WGPUQueueWorkDoneStatus status, void *callbackData)
+        wgpuQueueSubmit(this->mgpu.ctx.queue, 1, &op.commandBuffer);
+        wgpuQueueOnSubmittedWorkDone(this->mgpu.ctx.queue, [](WGPUQueueWorkDoneStatus status, void *callbackData)
                                      {
             check(status == WGPUQueueWorkDoneStatus_Success, "Queue work done", __FILE__, __LINE__);
             const auto *data = static_cast<gpu::CallbackData *>(callbackData);
@@ -83,7 +81,7 @@ namespace mgpu
                                    data->promise->set_value();
                                },
                                callbackData); }, &callbackData);
-        gpu::wait(ctx, op.future);
+        gpu::wait(this->mgpu.ctx, op.future);
         callback(userData);
     }
 
@@ -97,7 +95,7 @@ namespace mgpu
         }
 
         // Copy the input data to the buffer using gpu::toGPU
-        gpu::toGPU(ctx, inputData, bufferData.buffer, size);
+        gpu::toGPU(this->mgpu.ctx, inputData, bufferData.buffer, size);
     }
 
     void Buffer::release()

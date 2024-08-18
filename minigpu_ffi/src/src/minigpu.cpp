@@ -6,19 +6,21 @@ extern "C"
 {
 #endif
 
+    MGPU minigpu;
+
     void mgpuInitializeContext()
     {
-        initializeContext();
+        minigpu.initializeContext();
     }
 
     void mgpuDestroyContext()
     {
-        destroyContext();
+        minigpu.destroyContext();
     }
 
     MGPUComputeShader *mgpuCreateComputeShader()
     {
-        return reinterpret_cast<MGPUComputeShader *>(new mgpu::ComputeShader());
+        return reinterpret_cast<MGPUComputeShader *>(new mgpu::ComputeShader(minigpu));
     }
 
     void mgpuDestroyComputeShader(MGPUComputeShader *shader)
@@ -56,7 +58,7 @@ extern "C"
         if (buffer)
         {
             gpu::Array array = reinterpret_cast<mgpu::Buffer *>(buffer)->createBuffer(size, memSize);
-            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(std::move(array)));
+            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(std::move(array), minigpu));
         }
         else
         {
@@ -140,4 +142,4 @@ extern "C"
 
 #ifdef __cplusplus
 }
-#endif// extern "C"
+#endif // extern "C"

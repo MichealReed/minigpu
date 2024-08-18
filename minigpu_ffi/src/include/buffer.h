@@ -9,15 +9,18 @@
 
 namespace mgpu
 {
-
-    extern gpu::Context ctx;
-    void initializeContext();
-    void destroyContext();
+    class MGPU
+    {
+    public:
+        gpu::Context ctx;
+        void initializeContext();
+        void destroyContext();
+    };
 
     class Buffer
     {
     public:
-        Buffer(gpu::Array buffer);
+        Buffer(gpu::Array buffer, MGPU &mgpu);
         gpu::Array createBuffer(int size, int memSize);
         void readSync(void *outputData, size_t size);
         void readAsync(void *outputData, size_t size, std::function<void(void *)> callback, void *userData);
@@ -25,6 +28,9 @@ namespace mgpu
         void release();
 
         gpu::Array bufferData;
+
+    private:
+        MGPU &mgpu;
     };
 
 }

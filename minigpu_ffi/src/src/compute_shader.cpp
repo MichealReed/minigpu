@@ -5,8 +5,38 @@ using namespace gpu;
 namespace mgpu
 {
 
+    ComputeShader::ComputeShader(MGPU &mgpu) : mgpu(mgpu) {}
+
     void ComputeShader::loadKernelString(const std::string &kernelString)
     {
+        // Find the @workgroup_size attribute in the WGSL string
+        std::string workgroupSizeAttribute = "@workgroup_size";
+        size_t attributePos = kernelString.find(workgroupSizeAttribute);
+        if (attributePos != std::string::npos)
+        {
+            // Extract the workgroup size values
+            size_t startPos = attributePos + workgroupSizeAttribute.length();
+            size_t endPos = kernelString.find(")", startPos);
+            if (endPos != std::string::npos)
+            {
+                std::string workgroupSizeStr = kernelString.substr(startPos, endPos - startPos);
+                std::istringstream iss(workgroupSizeStr);
+                std::string sizeX, sizeY, sizeZ;
+                if (std::getline(iss, sizeX, ',') &&
+                    std::getline(iss, sizeY, ',') &&
+                    std::getline(iss, sizeZ, ')'))
+                {
+                    // Convert the size values to integers
+                    size_t x = std::stoi(sizeX);
+                    size_t y = std::stoi(sizeY);
+                    size_t z = std::stoi(sizeZ);
+                    // Use the extracted workgroup size values
+                    code = gpu::KernelCode{kernelString, {x, y, z}};
+                    return;
+                }
+            }
+        }
+        // If workgroup size is not found or parsing fails, use default values
         code = gpu::KernelCode{kernelString, {256, 1, 1}};
     }
 
@@ -54,10 +84,10 @@ namespace mgpu
 
     void ComputeShader::dispatch(const std::string &kernel, int groupsX, int groupsY, int groupsZ)
     {
-        gpu::Kernel op = gpu::createKernel(ctx, code, bindings.data(), bindings.size(), nullptr, {static_cast<size_t>(groupsX), static_cast<size_t>(groupsY), static_cast<size_t>(groupsZ)});
+        gpu::Kernel op = gpu::createKernel(this->mgpu.ctx, code, bindings.data(), bindings.size(), nullptr, {static_cast<size_t>(groupsX), static_cast<size_t>(groupsY), static_cast<size_t>(groupsZ)});
         std::promise<void> promise;
-        gpu::dispatchKernel(ctx, op, promise);
+        gpu::dispatchKernel(this->mgpu.ctx, op, promise);
         auto future = promise.get_future();
-        gpu::wait(ctx, future);
+        gpu::wait(this->mgpu.ctx, future);
     }
 }
