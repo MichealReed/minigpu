@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:minigpu_ffi/minigpu_ffi_bindings.dart' as ffi;
@@ -48,10 +49,8 @@ class MinigpuFfi extends MinigpuPlatform {
   }
 
   @override
-  PlatformBuffer createBuffer(
-      PlatformComputeShader shader, int size, int memSize) {
-    final self = _bindings.mgpuCreateBuffer(
-        (shader as FfiComputeShader)._self, size, memSize);
+  PlatformBuffer createBuffer(int size, int memSize) {
+    final self = _bindings.mgpuCreateBuffer(size, memSize);
     if (self == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return FfiBuffer(self);
   }
@@ -130,8 +129,8 @@ final class FfiBuffer implements PlatformBuffer {
   }
 
   @override
-  Future<void> readAsync(dynamic outputData, int size, void Function() callback,
-      dynamic userData) {
+  Future<void> readAsync(dynamic outputData, int size,
+      void Function(Float32List) callback, dynamic userData) {
     final completer = Completer<void>();
     final callbackId = identical(userData, null) ? 0 : userData.hashCode;
     _completers[callbackId] = completer;
@@ -140,7 +139,7 @@ final class FfiBuffer implements PlatformBuffer {
     final userDataPtr = Pointer<Void>.fromAddress(callbackId);
     _bindings.mgpuReadBufferAsync(
         _self, outputData, size, callbackPtr, userDataPtr);
-    return completer.future.then((_) => callback());
+    return completer.future.then((_) => callback(outputData));
   }
 
   @override

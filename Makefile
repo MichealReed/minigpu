@@ -28,10 +28,6 @@ VERSION ?= 1.0.0
 
 default: run
 
-init_submodules:
-	@echo "󰐊 Initializing submodules..."
-	@git submodule update --init --recursive
-
 pubspec_local:
 	@echo "󰐊 Switching our pubspecs for local dev with version ${VERSION}."
 	@python update_pubspecs.py ${VERSION}
@@ -44,7 +40,7 @@ clean:
 	@echo "󰃢 Cleaning Example."
 	@cd $(EXAMPLE_DIR) && flutter clean
 
-run: init_submodules
+run:
 ifeq ($(DETECTED_OS), Windows)
 	@echo "󰐊 Running example on Windows..."
 	@cd $(EXAMPLE_DIR) && cmd /c flutter run -d Windows
@@ -58,22 +54,22 @@ else
 	@echo "Unsupported OS: $(DETECTED_OS)"
 endif
 
-run_device: init_submodules
+run_device:
 	@echo "󰐊 Running example on device..."
 	@cd $(EXAMPLE_DIR) && flutter run
 
 run_web: build_weblib
 	@echo "󰐊 Running web example..."
 	@cd $(EXAMPLE_DIR) && flutter run -d chrome --web-browser-flag "--enable-features=SharedArrayBuffer" --web-browser-flag "--enable-unsafe-webgpu" --web-browser-flag "--disable-dawn-features=diallow_unsafe_apis"
-ffigen: init_submodules
+ffigen:
 	@echo "Generating dart ffi bindings..."
 	@cd $(FFI_DIR) && dart run ffigen
 
-build_weblib: init_submodules
+build_weblib:
 	@echo "Building ffi lib to web via emscripten..."
 	@cd $(BUILD_WEB_DIR) && emcmake cmake .. && cmake --build .
 
-build_ffilib: init_submodules
+build_ffilib:
 	@echo "Building ffi lib to native via emscripten..."
 	@cd $(BUILD_DIR) && cmake cmake .. --fresh && cmake --build .
 
@@ -93,14 +89,16 @@ clean_weblib:
 	@$(MKDIR_CMD) "$(BUILD_WEB_DIR)"
 
 help:
-	@echo "Available targets:"
-	@echo "  pubspec_local: Switches pubspecs for local dev."
-	@echo "  pubspec_release: Switches pubspecs for release."
-	@echo "  clean: Cleans the example project."
-	@echo "  run: Runs the example project on current OS."
-	@echo "  run_device: Runs the example project on chosen device."
-	@echo "  run_web: Runs the web example project."
-	@echo "  ffigen: Generates dart ffi bindings."
-	@echo "  build_weblib: Builds the ffi lib to web via emscripten."
-	@echo "  clean_weblib: Cleans the web lib."
-	@echo "  help: Shows this help message."
+	@echo ** Available Commands **
+	@echo *  make pubspec_local: Switches pubspecs for local dev."
+	@echo *  make pubspec_release: Switches pubspecs for release."
+	@echo *  make clean: Cleans the example project."
+	@echo *  make run: Runs the example project on current OS."
+	@echo *  make run_device: Runs the example project on chosen device."
+	@echo *  make run_web: Runs the web example project."
+	@echo *  make ffigen: Generates dart ffi bindings."
+	@echo *  make build_weblib: Builds the ffi lib to web via emscripten."
+	@echo *  make build_ffilib: Builds the ffi lib to native."
+	@echo *  make clean_weblib: Cleans the web lib."
+	@echo *  make clean_ffilib: Cleans the native lib."
+	@echo *  make help: Shows this help message."

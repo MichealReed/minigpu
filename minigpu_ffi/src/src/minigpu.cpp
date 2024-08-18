@@ -53,12 +53,13 @@ extern "C"
         }
     }
 
-    MGPUBuffer *mgpuCreateBuffer(MGPUBuffer *buffer, int size, int memSize)
+    MGPUBuffer *mgpuCreateBuffer(int size, int memSize)
     {
-        if (buffer)
+
+        MGPUBuffer *buffer;
+        if (size > 0 && memSize > 0)
         {
-            gpu::Array array = reinterpret_cast<mgpu::Buffer *>(buffer)->createBuffer(size, memSize);
-            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(std::move(array), minigpu));
+            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(minigpu));
         }
         else
         {

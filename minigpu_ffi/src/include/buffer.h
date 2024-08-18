@@ -20,8 +20,8 @@ namespace mgpu
     class Buffer
     {
     public:
-        Buffer(gpu::Array buffer, MGPU &mgpu);
-        gpu::Array createBuffer(int size, int memSize);
+        Buffer(MGPU &mgpu);
+        void createBuffer(int size, int memSize);
         void readSync(void *outputData, size_t size);
         void readAsync(void *outputData, size_t size, std::function<void(void *)> callback, void *userData);
         void setData(const void *inputData, size_t size);

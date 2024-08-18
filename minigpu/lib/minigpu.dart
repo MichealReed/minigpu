@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 
 /// Controls the initialization and destruction of the minigpu context.
@@ -33,12 +35,11 @@ final class Minigpu {
   }
 
   /// Creates a buffer.
-  Buffer createBuffer(ComputeShader shader, int size, int memSize) {
-    final platformBuffer =
-        _platform.createBuffer(shader._shader, size, memSize);
-    final buffer = Buffer._(platformBuffer);
-    _bufferFinalizer.attach(this, buffer);
-    return buffer;
+  Buffer createBuffer(int size, int memSize) {
+    final platformBuffer = _platform.createBuffer(size, memSize);
+    final buff = Buffer._(platformBuffer);
+    _bufferFinalizer.attach(this, buff);
+    return buff;
   }
 }
 
@@ -78,8 +79,8 @@ final class Buffer {
       _buffer.readSync(outputData, size);
 
   /// Reads data from the buffer asynchronously.
-  void readAsync(dynamic outputData, int size, void Function() callback,
-          dynamic userData) =>
+  void readAsync(dynamic outputData, int size,
+          void Function(Float32List) callback, dynamic userData) =>
       _buffer.readAsync(outputData, size, callback, userData);
 
   /// Writes data to the buffer.

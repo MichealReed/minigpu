@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 abstract class MinigpuPlatform extends PlatformInterface {
@@ -30,8 +32,8 @@ abstract class PlatformComputeShader {
 
 abstract class PlatformBuffer {
   void readSync(dynamic outputData, int size);
-  void readAsync(
-      dynamic outputData, int size, void Function() callback, dynamic userData);
+  void readAsync(dynamic outputData, int size,
+      void Function(Float32List) callback, dynamic userData);
   void setData(dynamic inputData, int size);
   void destroy();
 }

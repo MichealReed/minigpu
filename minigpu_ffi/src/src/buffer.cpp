@@ -19,9 +19,8 @@ namespace mgpu
         delete &this->ctx;
     }
 
-    Buffer::Buffer(gpu::Array buffer, MGPU& mgpu) : bufferData(buffer), mgpu(mgpu) {}
-
-    gpu::Array Buffer::createBuffer(int size, int memSize)
+    Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu) {}
+    void Buffer::createBuffer(int size, int memSize)
     {
         WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
         WGPUBufferDescriptor descriptor = {
@@ -34,7 +33,7 @@ namespace mgpu
             .usage = usage,
             .size = static_cast<size_t>(memSize),
         };
-        return array;
+        this->bufferData = array;
     }
 
     void Buffer::readSync(void *outputData, size_t size)

@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:js/js_util.dart';
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 import 'package:minigpu_web/bindings/minigpu_bindings.dart' as wasm;
 
@@ -26,11 +25,9 @@ class MinigpuWeb extends MinigpuPlatform {
   }
 
   @override
-  PlatformBuffer createBuffer(
-      PlatformComputeShader shader, int size, int memSize) {
-    final buffer = wasm.mgpuCreateBuffer(
-        (shader as WebComputeShader)._shader, size, memSize);
-    return WebBuffer(buffer);
+  PlatformBuffer createBuffer(dynamic size, int memSize) {
+    final buff = wasm.mgpuCreateBuffer(size, memSize);
+    return WebBuffer(buff);
   }
 }
 
@@ -75,9 +72,9 @@ class WebBuffer implements PlatformBuffer {
     wasm.mgpuReadBufferSync(_buffer, outputData, size);
   }
 
-  void readAsync(dynamic outputData, int size, void Function() callback,
-      dynamic userData) {
-    //wasm.mgpuReadBufferAsync(_buffer, outputData, size, allowInterop(callback));
+  void readAsync(dynamic outputData, int size,
+      void Function(Float32List) callback, dynamic userData) {
+    wasm.mgpuReadBufferAsync(_buffer, outputData, size, callback);
   }
 
   @override
