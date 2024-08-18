@@ -23,22 +23,6 @@ namespace mgpu
         return !code.data.empty();
     }
 
-    gpu::Array ComputeShader::createBuffer(int size, int memSize)
-    {
-        WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
-        WGPUBufferDescriptor descriptor = {
-            .usage = usage,
-            .size = static_cast<uint64_t>(memSize),
-        };
-        WGPUBuffer buffer = wgpuDeviceCreateBuffer(ctx.device, &descriptor);
-        gpu::Array array = {
-            .buffer = buffer,
-            .usage = usage,
-            .size = static_cast<size_t>(memSize),
-        };
-        return array;
-    }
-
     void ComputeShader::setBuffer(const std::string &kernel, const std::string &tag, const Buffer &buffer)
     {
         // Find the binding index for the given tag in the kernel

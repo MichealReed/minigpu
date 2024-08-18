@@ -9,6 +9,7 @@
 
 namespace mgpu
 {
+
     extern gpu::Context ctx;
     void initializeContext();
     void destroyContext();
@@ -16,7 +17,8 @@ namespace mgpu
     class Buffer
     {
     public:
-        Buffer(gpu::Array bufferData);
+        Buffer(gpu::Array buffer);
+        gpu::Array createBuffer(int size, int memSize);
         void readSync(void *outputData, size_t size);
         void readAsync(void *outputData, size_t size, std::function<void(void *)> callback, void *userData);
         void setData(const void *inputData, size_t size);

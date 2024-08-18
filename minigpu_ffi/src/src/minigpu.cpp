@@ -51,16 +51,16 @@ extern "C"
         }
     }
 
-    MGPUBuffer *mgpuCreateBuffer(MGPUComputeShader *shader, int size, int memSize)
+    MGPUBuffer *mgpuCreateBuffer(MGPUBuffer *buffer, int size, int memSize)
     {
-        if (shader)
+        if (buffer)
         {
-            gpu::Array array = reinterpret_cast<mgpu::ComputeShader *>(shader)->createBuffer(size, memSize);
-            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(array));
+            gpu::Array array = reinterpret_cast<mgpu::Buffer *>(buffer)->createBuffer(size, memSize);
+            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(std::move(array)));
         }
         else
         {
-            LOG(kDefLog, kError, "Invalid shader pointer");
+            LOG(kDefLog, kError, "Invalid buffer pointer");
             return nullptr;
         }
     }

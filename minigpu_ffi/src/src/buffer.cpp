@@ -12,7 +12,7 @@ namespace mgpu
 
     void initializeContext()
     {
-        //gpu::setLogLevel(0);
+        // gpu::setLogLevel(0);
         ctx = gpu::createContext();
     }
 
@@ -21,7 +21,23 @@ namespace mgpu
         delete &ctx;
     }
 
-    Buffer::Buffer(gpu::Array bufferData) : bufferData(bufferData) {}
+    Buffer::Buffer(gpu::Array buffer) : bufferData(buffer) {}
+
+    gpu::Array Buffer::createBuffer(int size, int memSize)
+    {
+        WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
+        WGPUBufferDescriptor descriptor = {
+            .usage = usage,
+            .size = static_cast<uint64_t>(memSize),
+        };
+        WGPUBuffer buffer = wgpuDeviceCreateBuffer(ctx.device, &descriptor);
+        gpu::Array array = {
+            .buffer = buffer,
+            .usage = usage,
+            .size = static_cast<size_t>(memSize),
+        };
+        return array;
+    }
 
     void Buffer::readSync(void *outputData, size_t size)
     {

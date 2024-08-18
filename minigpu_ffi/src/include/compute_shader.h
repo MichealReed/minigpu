@@ -11,7 +11,6 @@ namespace mgpu
         void loadKernelString(const std::string &kernelString);
         void loadKernelFile(const std::string &path);
         bool hasKernel() const;
-        gpu::Array createBuffer(int size, int memSize);
         void setBuffer(const std::string &kernel, const std::string &tag, const Buffer &buffer);
         void dispatch(const std::string &kernel, int groupsX, int groupsY, int groupsZ);
 
