@@ -33,15 +33,15 @@ flutter:
   plugin:
     platforms:
       android:
-        default_package: Minigpu_ffi
+        default_package: minigpu_ffi
       ios:
-        default_package: Minigpu_ffi
+        default_package: minigpu_ffi
       linux:
-        default_package: Minigpu_ffi
+        default_package: minigpu_ffi
       macos:
-        default_package: Minigpu_ffi
+        default_package: minigpu_ffi
       windows:
-        default_package: Minigpu_ffi
+        default_package: minigpu_ffi
       web:
         default_package: minigpu_web
 
