@@ -42,7 +42,7 @@ class _MinigpuExampleState extends State<MinigpuExample> {
 
   Future<void> _runKernel() async {
     _shader = _minigpu.createComputeShader();
-    _shader.loadKernelString('''
+    _shader.loadKernelString('''(
 const GELU_SCALING_FACTOR: f32 = 0.7978845608028654; // sqrt(2.0 / PI)
 @group(0) @binding(0) var<storage, read_write> inp: array<f32>;
 @group(0) @binding(1) var<storage, read_write> out: array<f32>;
@@ -56,7 +56,7 @@ fn main(
                  * (x + .044715 * x * x * x))), x, x > 10.0);
     }
 }
-   ''');
+   )''');
 
     final bufferSize = 10000;
     final memSize = bufferSize * Float32List.bytesPerElement;

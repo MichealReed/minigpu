@@ -77,7 +77,7 @@ else()
         RUNTIME_OUTPUT_DIRECTORY ${WEB_OUTPUT_DIR}
     )
     target_compile_options(${MAIN_LIB} PUBLIC
-        -O0
+        -O2
         -flto -fno-rtti
     )
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
