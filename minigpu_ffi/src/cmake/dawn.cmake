@@ -10,10 +10,9 @@ execute_process(
     RESULT_VARIABLE FETCH_RESULT
 )
 
-set(INSTALL_DIR "${EXT_SOURCE_DIR}" CACHE INTERNAL "")
+set(DAWN_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/dawn" CACHE INTERNAL "")
 
 set(DESIRED_CMAKE_ARGS
-    -DDAWN_DISABLE_LOGGING=ON
     -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 )
 
@@ -23,11 +22,12 @@ ExternalProject_Add(
     PREFIX dawn
     SOURCE_DIR "${EXT_SOURCE_DIR}/dawn"
     CMAKE_ARGS ${DESIRED_CMAKE_ARGS}
+    BINARY_DIR "${DAWN_BUILD_DIR}"
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR>
-    INSTALL_DIR ${INSTALL_DIR}
-    STEP_TARGETS install
+    INSTALL_COMMAND ""
 )
 
-add_custom_target(install_dawn
-    DEPENDS dawn_project-install
-)
+add_library(dawn INTERFACE)
+add_dependencies(dawn dawn_project)
+target_include_directories(dawn INTERFACE "${EXT_SOURCE_DIR}/dawn/include")
+target_link_directories(dawn INTERFACE "${DAWN_BUILD_DIR}/src/dawn")

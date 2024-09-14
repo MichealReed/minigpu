@@ -68,7 +68,7 @@ class WebBuffer implements PlatformBuffer {
   WebBuffer(this._buffer);
 
   @override
-  void readSync(dynamic outputData, int size) {
+  void readSync(ByteBuffer outputData, int size) {
     wasm.mgpuReadBufferSync(_buffer, outputData, size);
   }
 
@@ -78,7 +78,7 @@ class WebBuffer implements PlatformBuffer {
   }
 
   @override
-  void setData(dynamic inputData, int size) {
+  void setData(ByteBuffer inputData, int size) {
     wasm.mgpuSetBufferData(_buffer, inputData, size);
   }
 

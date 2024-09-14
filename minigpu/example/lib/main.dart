@@ -66,14 +66,14 @@ fn main(
     final inputData = Float32List.fromList(
       List<double>.generate(bufferSize, (i) => i / 10.0),
     );
-    _inputBuffer.setData(inputData, memSize);
+    _inputBuffer.setData(inputData.buffer, memSize);
 
     _shader.setBuffer('main', 'inp', _inputBuffer);
     _shader.setBuffer('main', 'out', _outputBuffer);
     _shader.dispatch('main', (bufferSize / 256).ceil(), 1, 1);
 
     final outputData = Float32List(bufferSize);
-    _outputBuffer.readSync(outputData, memSize);
+    _outputBuffer.readSync(outputData.buffer, memSize);
 
     setState(() {
       _result =

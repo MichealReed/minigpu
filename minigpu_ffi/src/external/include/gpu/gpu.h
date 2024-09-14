@@ -492,7 +492,7 @@ struct KernelPool {
 
 inline void processEvents(const WGPUInstance &instance) {
 #ifdef __EMSCRIPTEN__
-  emscripten_sleep(0);
+  emscripten_sleep(100);
 #else
   wgpuInstanceProcessEvents(instance);
 #endif

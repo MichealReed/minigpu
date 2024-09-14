@@ -5,7 +5,7 @@ version: 1.0.0
 repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_platform_interface
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.5.0 <4.0.0"
 # Add regular dependencies here.
 dependencies:
   plugin_platform_interface: ^2.1.8

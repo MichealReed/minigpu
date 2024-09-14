@@ -4,27 +4,8 @@ library minigpu_bindings;
 import 'dart:js_interop';
 import 'dart:typed_data';
 
-import 'package:js/js_util.dart';
-
-// Interop types
-@JS()
-@staticInterop
-class MGPUComputeShader {}
-
-extension MGPUComputeShaderExtension on MGPUComputeShader {
-  external void loadKernel(JSString kernelString);
-  external JSBoolean hasKernel();
-}
-
-@JS()
-@staticInterop
-class MGPUBuffer {}
-
-extension MGPUBufferExtension on MGPUBuffer {
-  external void setData(JSAny data, JSNumber size);
-  external void readSync(JSAny outputData, JSNumber size);
-  external void readAsync(JSAny outputData, JSNumber size, JSFunction callback);
-}
+typedef MGPUBuffer = JSNumber;
+typedef MGPUComputeShader = JSNumber;
 
 // Context functions
 @JS('_mgpuInitializeContext')
@@ -56,12 +37,18 @@ void mgpuDestroyComputeShader(MGPUComputeShader shader) {
   _mgpuDestroyComputeShader(shader);
 }
 
+@JS('_mgpuLoadKernel')
+external void _mgpuLoadKernel(MGPUComputeShader shader, JSString kernelString);
+
 void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
-  shader.loadKernel(kernelString.toJS);
+  _mgpuLoadKernel(shader, kernelString.toJS);
 }
 
+@JS('_mgpuHasKernel')
+external JSBoolean _mgpuHasKernel(MGPUComputeShader shader);
+
 bool mgpuHasKernel(MGPUComputeShader shader) {
-  return shader.hasKernel().toDart;
+  return _mgpuHasKernel(shader).toDart;
 }
 
 // Buffer functions
@@ -99,24 +86,38 @@ void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
 }
 
 // Buffer read functions
+@JS('_mgpuReadBufferSync')
+external void _mgpuReadBufferSync(
+    MGPUBuffer buffer, JSAny outputData, JSNumber size);
+
 void mgpuReadBufferSync(MGPUBuffer buffer, ByteBuffer outputData, int size) {
-  buffer.readSync(outputData.toJS, size.toJS);
+  _mgpuReadBufferSync(buffer, outputData.toJS, size.toJS);
 }
 
 typedef ReadBufferAsyncCallbackFunc = void Function(Float32List);
 
+@JS('_mgpuReadBufferAsync')
+external void _mgpuReadBufferAsync(MGPUBuffer buffer, JSAny outputData,
+    JSNumber size, JSFunction callback, JSAny userData);
+
 void mgpuReadBufferAsync(MGPUBuffer buffer, Float32List outputData, int size,
     ReadBufferAsyncCallbackFunc callback) {
-  buffer.readAsync(
+  _mgpuReadBufferAsync(
+      buffer,
       outputData.toJS,
       size.toJS,
-      allowInterop((JSAny result) {
-        ByteBuffer byteBuffer = result as ByteBuffer;
+      ((JSAny result) {
+        ByteBuffer byteBuffer = (result as JSObject).dartify() as ByteBuffer;
         Float32List float32list = Float32List.view(byteBuffer, 0, size);
         callback(float32list);
-      }).toJS);
+      }).toJS,
+      null.jsify()!);
 }
 
+@JS('_mgpuSetBufferData')
+external void _mgpuSetBufferData(
+    MGPUBuffer buffer, JSAny inputData, JSNumber size);
+
 void mgpuSetBufferData(MGPUBuffer buffer, ByteBuffer inputData, int size) {
-  buffer.setData(inputData.toJS, size.toJS);
+  _mgpuSetBufferData(buffer, inputData.toJS, size.toJS);
 }

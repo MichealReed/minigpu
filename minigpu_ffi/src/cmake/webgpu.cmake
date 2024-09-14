@@ -17,7 +17,7 @@ endif()
 message(STATUS "Using WebGPU distribution tag: ${WEBGPU_TAG}")
 
 if (WEBGPU_TAG STREQUAL "dawn")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBGPU_BACKEND=WGPU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DWEBGPU_BACKEND=DAWN")
   # use specific commit
   #set(WEBGPU_TAG "acf972b7b909f52e183bdae3971b93bb13d4a29e")
   # add_compile_options(-UABSL_INTERNAL_AT_LEAST_CXX20)

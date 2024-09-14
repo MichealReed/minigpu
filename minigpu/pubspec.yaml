@@ -7,7 +7,7 @@ repository: https://github.com/MichealReed/minigpu/tree/master/minigpu
 #####
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.5.0 <4.0.0"
   flutter: ">=1.20.0"
 
 dependencies:
