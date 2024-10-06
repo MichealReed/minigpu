@@ -7,6 +7,15 @@ import 'dart:typed_data';
 typedef MGPUBuffer = JSNumber;
 typedef MGPUComputeShader = JSNumber;
 
+@JS('_malloc')
+external JSNumber _malloc(JSNumber size);
+
+@JS('_free')
+external void _free(JSNumber ptr);
+
+@JS('_memcpy')
+external void _memcpy(JSNumber dest, JSAny src, JSNumber size);
+
 // Context functions
 @JS('_mgpuInitializeContext')
 external void _mgpuInitializeContext();
@@ -48,7 +57,7 @@ void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
 external JSBoolean _mgpuHasKernel(MGPUComputeShader shader);
 
 bool mgpuHasKernel(MGPUComputeShader shader) {
-  return _mgpuHasKernel(shader).toDart;
+  return _mgpuHasKernel(shader).dartify() as bool;
 }
 
 // Buffer functions
@@ -88,36 +97,62 @@ void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
 // Buffer read functions
 @JS('_mgpuReadBufferSync')
 external void _mgpuReadBufferSync(
-    MGPUBuffer buffer, JSAny outputData, JSNumber size);
+    MGPUBuffer buffer, JSNumber outputDataPtr, JSNumber size);
 
-void mgpuReadBufferSync(MGPUBuffer buffer, ByteBuffer outputData, int size) {
-  _mgpuReadBufferSync(buffer, outputData.toJS, size.toJS);
+void mgpuReadBufferSync(MGPUBuffer buffer, Float32List outputData, int size) {
+  final ptr = _malloc((size * Float32List.bytesPerElement).toJS);
+  try {
+    _mgpuReadBufferSync(buffer, ptr, size.toJS);
+    final jsArray = JSFloat32Array(outputData.buffer.toJS);
+    _memcpy(outputData.offsetInBytes.toJS, ptr,
+        (size * Float32List.bytesPerElement).toJS);
+  } finally {
+    _free(ptr);
+  }
 }
 
 typedef ReadBufferAsyncCallbackFunc = void Function(Float32List);
 
 @JS('_mgpuReadBufferAsync')
-external void _mgpuReadBufferAsync(MGPUBuffer buffer, JSAny outputData,
+external void _mgpuReadBufferAsync(MGPUBuffer buffer, JSNumber outputDataPtr,
     JSNumber size, JSFunction callback, JSAny userData);
 
 void mgpuReadBufferAsync(MGPUBuffer buffer, Float32List outputData, int size,
     ReadBufferAsyncCallbackFunc callback) {
+  final ptr = _malloc((size * Float32List.bytesPerElement).toJS);
   _mgpuReadBufferAsync(
       buffer,
-      outputData.toJS,
+      ptr,
       size.toJS,
-      ((JSAny result) {
-        ByteBuffer byteBuffer = (result as JSObject).dartify() as ByteBuffer;
-        Float32List float32list = Float32List.view(byteBuffer, 0, size);
-        callback(float32list);
+      ((JSAny _) {
+        final jsArray = JSFloat32Array(outputData.buffer.toJS);
+        _memcpy(outputData.offsetInBytes.toJS, ptr,
+            (size * Float32List.bytesPerElement).toJS);
+        callback(outputData);
+        _free(ptr);
       }).toJS,
       null.jsify()!);
 }
 
 @JS('_mgpuSetBufferData')
 external void _mgpuSetBufferData(
-    MGPUBuffer buffer, JSAny inputData, JSNumber size);
+    MGPUBuffer buffer, JSNumber inputDataPtr, JSNumber size);
 
-void mgpuSetBufferData(MGPUBuffer buffer, ByteBuffer inputData, int size) {
-  _mgpuSetBufferData(buffer, inputData.toJS, size.toJS);
+void mgpuSetBufferData(MGPUBuffer buffer, Float32List inputData, int size) {
+  final byteSize = size * Float32List.bytesPerElement;
+  final ptr = _malloc(byteSize.toJS);
+
+  try {
+    // Copy data to the allocated memory
+    final jsArray = JSFloat32Array(inputData.buffer.toJS);
+    _memcpy(ptr, inputData.offsetInBytes.toJS, byteSize.toJS);
+
+    print(buffer);
+
+    // Call the WASM function with the pointer
+    _mgpuSetBufferData(buffer, ptr, size.toJS);
+  } finally {
+    // Free the allocated memory
+    _free(ptr);
+  }
 }

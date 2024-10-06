@@ -84,10 +84,10 @@ namespace mgpu
 
     void ComputeShader::dispatch(const std::string &kernel, int groupsX, int groupsY, int groupsZ)
     {
-        gpu::Kernel op = gpu::createKernel(this->mgpu.ctx, code, bindings.data(), bindings.size(), nullptr, {static_cast<size_t>(groupsX), static_cast<size_t>(groupsY), static_cast<size_t>(groupsZ)});
+        gpu::Kernel op = gpu::createKernel(this->mgpu.getContext(), code, bindings.data(), bindings.size(), nullptr, {static_cast<size_t>(groupsX), static_cast<size_t>(groupsY), static_cast<size_t>(groupsZ)});
         std::promise<void> promise;
-        gpu::dispatchKernel(this->mgpu.ctx, op, promise);
+        gpu::dispatchKernel(this->mgpu.getContext(), op, promise);
         auto future = promise.get_future();
-        gpu::wait(this->mgpu.ctx, future);
+        gpu::wait(this->mgpu.getContext(), future);
     }
 }

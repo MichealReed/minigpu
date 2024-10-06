@@ -75,16 +75,16 @@ final class Buffer {
   final PlatformBuffer _buffer;
 
   /// Reads data from the buffer synchronously.
-  void readSync(ByteBuffer outputData, int size) =>
+  void readSync(Float32List outputData, int size) =>
       _buffer.readSync(outputData, size);
 
   /// Reads data from the buffer asynchronously.
-  void readAsync(ByteBuffer outputData, int size,
+  void readAsync(Float32List outputData, int size,
           void Function(Float32List) callback, dynamic userData) =>
       _buffer.readAsync(outputData, size, callback, userData);
 
   /// Writes data to the buffer.
-  void setData(ByteBuffer inputData, int size) =>
+  void setData(Float32List inputData, int size) =>
       _buffer.setData(inputData, size);
 
   /// Destroys the buffer.

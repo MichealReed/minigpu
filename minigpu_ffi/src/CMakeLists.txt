@@ -55,10 +55,10 @@ if(NOT EMSCRIPTEN)
 else()
     # Exclude webgpu/webgpu.h when using Emscripten
     list(APPEND MAIN_INCLUDES
-        ${MAIN_PATH}/include/gpu/gpu.h
-        ${MAIN_PATH}/include/gpu/utils/logging.h
+        ${MAIN_PATH}/include/gpu/gpu.hpp
+        ${MAIN_PATH}/include/gpu/utils/logging.hpp
         ${MAIN_PATH}/include/gpu/utils/array_utils.h
-        ${MAIN_PATH}/include/gpu/numeric_types/half.h
+        ${MAIN_PATH}/include/gpu/numeric_types/half.hpp
     )
 endif()
 
@@ -83,8 +83,8 @@ else()
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
         -O2 \
         -flto \
-        -sEXPORTED_FUNCTIONS=_malloc,_free -sEXPORTED_RUNTIME_METHODS=ccall \
-        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb -sUSE_WEBGPU=1 -sASYNCIFY=1 \
+        -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy -sEXPORTED_RUNTIME_METHODS=ccall \
+        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb -sUSE_WEBGPU=1 -sASYNCIFY\
     ")
 endif()
 

@@ -12,9 +12,13 @@ namespace mgpu
     class MGPU
     {
     public:
-        gpu::Context ctx;
         void initializeContext();
         void destroyContext();
+
+        gpu::Context &getContext() { return *ctx; }
+
+    private:
+        std::unique_ptr<gpu::Context> ctx;
     };
 
     class Buffer

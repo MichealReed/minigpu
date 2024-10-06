@@ -31,10 +31,10 @@ abstract class PlatformComputeShader {
 }
 
 abstract class PlatformBuffer {
-  void readSync(ByteBuffer outputData, int size);
-  void readAsync(ByteBuffer outputData, int size,
+  void readSync(Float32List outputData, int size);
+  void readAsync(Float32List outputData, int size,
       void Function(Float32List) callback, dynamic userData);
-  void setData(ByteBuffer inputData, int size);
+  void setData(Float32List inputData, int size);
   void destroy();
 }
 
