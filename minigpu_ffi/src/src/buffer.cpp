@@ -11,7 +11,7 @@ namespace mgpu
     void MGPU::initializeContext()
     {
         // Initialize the context using gpu::createContext
-        gpu::Context* rawContext = new gpu::Context(gpu::createContext());
+        gpu::Context *rawContext = new gpu::Context(gpu::createContext());
         if (rawContext)
         {
             ctx = std::unique_ptr<gpu::Context>(rawContext);
@@ -28,34 +28,28 @@ namespace mgpu
     }
 
     Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu) {}
-    void Buffer::createBuffer(int size, int memSize)
+    void Buffer::createBuffer(int numElements, int memSize)
     {
-
-        // Proceed with buffer creation
         WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
         WGPUBufferDescriptor descriptor = {
             .usage = usage,
             .size = static_cast<uint64_t>(memSize),
         };
 
-        LOG(kDefLog, kInfo, "mgpuCreateBuffer called with size: %d, memSize: %d", size, memSize);
-        LOG(kDefLog, kInfo, "mgpuCreateBuffer called with device: %p", (void *)this->mgpu.getContext().device);
-        LOG(kDefLog, kInfo, "mgpuCreateBuffer called with descriptor size: %llu, usage: %u",
-            descriptor.size, descriptor.usage);
+        LOG(kDefLog, kInfo, "Creating buffer with elements: %d, bytes: %d", numElements, memSize);
 
         WGPUBuffer buffer = wgpuDeviceCreateBuffer(this->mgpu.getContext().device, &descriptor);
         if (buffer == nullptr)
         {
-            LOG(kDefLog, kError, "wgpuDeviceCreateBuffer failed to create buffer");
-            return; // Handle buffer creation failure
+            LOG(kDefLog, kError, "Failed to create buffer");
+            return;
         }
 
-        gpu::Array array = {
+        bufferData = gpu::Array{
             .buffer = buffer,
             .usage = usage,
             .size = static_cast<size_t>(memSize),
         };
-        this->bufferData = array; // Assuming bufferDat assignment was incomplete in the snippet
     }
 
     void Buffer::readSync(void *outputData, size_t size)
@@ -109,20 +103,16 @@ namespace mgpu
     void Buffer::setData(const float *inputData, size_t size)
     {
         setLogLevel(4);
-        // Ensure the buffer size is sufficient
-        if (size > bufferData.size)
+        // Check if we need to create or resize the buffer
+        if (bufferData.buffer == nullptr || size > bufferData.size)
         {
-            LOG(kDefLog, kError, "Buffer size is insufficient");
-            return;
+            createBuffer(size / sizeof(float), size);
         }
 
-        createBuffer(size / 4, size);
-
-        LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer last: %d, size: %d", bufferData.buffer, size);
-        LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %d, size: %d", inputData, size);
+        LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer: %p, size: %zu", (void *)bufferData.buffer, size);
 
         // Copy the input data to the buffer using gpu::toGPU
-        gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, size * sizeof(float));
+        gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, size);
     }
 
     void Buffer::release()

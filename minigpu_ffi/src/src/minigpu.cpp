@@ -81,11 +81,11 @@ extern "C"
         }
     }
 
-    void mgpuSetBuffer(MGPUComputeShader *shader, const char *kernel, const char *tag, MGPUBuffer *buffer)
+    void mgpuSetBuffer(MGPUComputeShader *shader, const char *tag, MGPUBuffer *buffer)
     {
-        if (shader && kernel && tag && buffer)
+        if (shader && tag && buffer)
         {
-            reinterpret_cast<mgpu::ComputeShader *>(shader)->setBuffer(kernel, tag, *reinterpret_cast<mgpu::Buffer *>(buffer));
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->setBuffer(tag, *reinterpret_cast<mgpu::Buffer *>(buffer));
         }
         else
         {

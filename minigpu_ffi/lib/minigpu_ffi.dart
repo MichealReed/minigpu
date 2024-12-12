@@ -78,14 +78,12 @@ final class FfiComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void setBuffer(String kernel, String tag, PlatformBuffer buffer) {
-    final kernelPtr = kernel.toNativeUtf8();
+  void setBuffer(String tag, PlatformBuffer buffer) {
     final tagPtr = tag.toNativeUtf8();
     try {
       _bindings.mgpuSetBuffer(
-          _self, kernelPtr.cast(), tagPtr.cast(), (buffer as FfiBuffer)._self);
+          _self, tagPtr.cast(), (buffer as FfiBuffer)._self);
     } finally {
-      malloc.free(kernelPtr);
       malloc.free(tagPtr);
     }
   }

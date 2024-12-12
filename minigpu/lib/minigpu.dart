@@ -57,8 +57,8 @@ final class ComputeShader {
   bool hasKernel() => _shader.hasKernel();
 
   /// Sets a buffer for the specified kernel and tag.
-  void setBuffer(String kernel, String tag, Buffer buffer) =>
-      _shader.setBuffer(kernel, tag, buffer._buffer);
+  void setBuffer(String tag, Buffer buffer) =>
+      _shader.setBuffer(tag, buffer._buffer);
 
   /// Dispatches the specified kernel with the given work group counts.
   void dispatch(String kernel, int groupsX, int groupsY, int groupsZ) =>

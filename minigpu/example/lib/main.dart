@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:minigpu/minigpu.dart';
 
@@ -42,7 +41,7 @@ class _MinigpuExampleState extends State<MinigpuExample> {
 
   Future<void> _runKernel() async {
     _shader = _minigpu.createComputeShader();
-    _shader.loadKernelString('''(
+    _shader.loadKernelString('''
 const GELU_SCALING_FACTOR: f32 = 0.7978845608028654; // sqrt(2.0 / PI)
 @group(0) @binding(0) var<storage, read_write> inp: array<f32>;
 @group(0) @binding(1) var<storage, read_write> out: array<f32>;
@@ -56,21 +55,25 @@ fn main(
                  * (x + .044715 * x * x * x))), x, x > 10.0);
     }
 }
-   )''');
+''');
 
-    final bufferSize = 10000;
-    final memSize = bufferSize * Float32List.bytesPerElement;
-    _inputBuffer = _minigpu.createBuffer(bufferSize, memSize);
-    _outputBuffer = _minigpu.createBuffer(bufferSize, memSize);
-
+    final bufferSize = 100;
     final inputData = Float32List.fromList(
       List<double>.generate(bufferSize, (i) => i / 10.0),
     );
+    print('bufferSize: ${inputData.lengthInBytes}');
+    final memSize = bufferSize * 4; // 4 bytes per float32
+
+    _inputBuffer = _minigpu.createBuffer(bufferSize, memSize);
+    _outputBuffer = _minigpu.createBuffer(bufferSize, memSize);
+
     _inputBuffer.setData(inputData, memSize);
 
-    _shader.setBuffer('main', 'inp', _inputBuffer);
-    _shader.setBuffer('main', 'out', _outputBuffer);
-    _shader.dispatch('main', (bufferSize / 256).ceil(), 1, 1);
+    _shader.setBuffer('inp', _inputBuffer);
+    _shader.setBuffer('out', _outputBuffer);
+
+    final workgroups = ((bufferSize + 255) / 256).floor();
+    _shader.dispatch('main', workgroups, 1, 1);
 
     final outputData = Float32List(bufferSize);
     _outputBuffer.readSync(outputData, memSize);
@@ -91,7 +94,10 @@ fn main(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ElevatedButton(onPressed: _runKernel, child: Text('Run GELU')),
+            ElevatedButton(
+              onPressed: _runKernel,
+              child: Text('Run GELU'),
+            ),
             SizedBox(height: 16),
             Text(
               'Result:',
