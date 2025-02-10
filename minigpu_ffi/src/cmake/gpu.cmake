@@ -1,12 +1,23 @@
 set(GPU_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/external/include/gpu")
 
-set(GPU_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/gpu.hpp")
-set(GPU_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/gpu.cpp")
-set(LOGGING_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/utils/logging.hpp")
-set(ARRAY_UTILS_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/utils/array_utils.hpp")
-set(HALF_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/numeric_types/half.cpp")
-set(HALF_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/numeric_types/half.hpp")
-set(WEBGPU_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/main/third_party/headers/webgpu/webgpu.h")
+# Add option for using development branch
+option(GPU_USE_DEV_BRANCH "Use development branch instead of main" ON)
+
+# Set the branch based on the option
+if(GPU_USE_DEV_BRANCH)
+    set(GPU_BRANCH "dev")
+else()
+    set(GPU_BRANCH "main")
+endif()
+
+# Define URLs with dynamic branch
+set(GPU_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/gpu.hpp")
+set(GPU_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/gpu.cpp")
+set(LOGGING_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/utils/logging.hpp")
+set(ARRAY_UTILS_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/utils/array_utils.hpp")
+set(HALF_CPP_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/numeric_types/half.cpp")
+set(HALF_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/numeric_types/half.hpp")
+set(WEBGPU_H_URL "https://raw.githubusercontent.com/AnswerDotAI/gpu.cpp/${GPU_BRANCH}/third_party/headers/webgpu/webgpu.h")
 
 set(GPU_H_PATH "${GPU_INCLUDE_DIR}/gpu.hpp")
 set(GPU_CPP_PATH "${GPU_INCLUDE_DIR}/gpu.cpp")

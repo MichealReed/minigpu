@@ -122,8 +122,16 @@ final class FfiBuffer implements PlatformBuffer {
   }
 
   @override
-  void readSync(dynamic outputData, int size) {
-    _bindings.mgpuReadBufferSync(_self, outputData, size);
+  void readSync(Float32List outputData, int size) {
+    int elementCount = outputData.length;
+    final outputPtr = malloc.allocate<Float>(elementCount * sizeOf<Float>());
+    final outputTypedList = outputPtr.asTypedList(elementCount);
+
+    _bindings.mgpuReadBufferSync(
+        _self, outputPtr, elementCount * sizeOf<Float>());
+
+    outputData.setAll(0, outputTypedList);
+    malloc.free(outputPtr);
   }
 
   @override
@@ -142,10 +150,12 @@ final class FfiBuffer implements PlatformBuffer {
 
   @override
   void setData(Float32List inputData, int size) {
-    final inputPtr = malloc.allocate<Float>(inputData.length * 8);
-    final inputTypedList = inputPtr.asTypedList(size);
+    int elementCount = inputData.length;
+    final inputPtr = malloc.allocate<Float>(elementCount * sizeOf<Float>());
+    final inputTypedList = inputPtr.asTypedList(elementCount);
     inputTypedList.setAll(0, inputData);
-    _bindings.mgpuSetBufferData(_self, inputPtr, size);
+    _bindings.mgpuSetBufferData(
+        _self, inputPtr, elementCount * sizeOf<Float>());
     malloc.free(inputPtr);
   }
 

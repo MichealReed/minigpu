@@ -24,17 +24,23 @@ namespace mgpu
 
     void MGPU::destroyContext()
     {
-        delete &this->ctx;
     }
 
-    Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu) {}
+    Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu)
+    {
+        bufferData.buffer = nullptr;
+        bufferData.usage = 0;
+        bufferData.size = 0;
+    }
     void Buffer::createBuffer(int numElements, int memSize)
     {
         WGPUBufferUsageFlags usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst | WGPUBufferUsage_CopySrc;
-        WGPUBufferDescriptor descriptor = {
-            .usage = usage,
-            .size = static_cast<uint64_t>(memSize),
-        };
+        // Zero‐initialize the descriptor.
+        WGPUBufferDescriptor descriptor = {};
+        descriptor.usage = usage;
+        descriptor.size = static_cast<uint64_t>(memSize);
+        descriptor.mappedAtCreation = false;
+        descriptor.label = nullptr; // or you can set a string if desired
 
         LOG(kDefLog, kInfo, "Creating buffer with elements: %d, bytes: %d", numElements, memSize);
 
@@ -102,7 +108,7 @@ namespace mgpu
 
     void Buffer::setData(const float *inputData, size_t size)
     {
-        setLogLevel(4);
+        setLogLevel(0);
         // Check if we need to create or resize the buffer
         if (bufferData.buffer == nullptr || size > bufferData.size)
         {
@@ -113,6 +119,8 @@ namespace mgpu
 
         // Copy the input data to the buffer using gpu::toGPU
         gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, size);
+
+        LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f", inputData[size - 1]);
     }
 
     void Buffer::release()

@@ -81,6 +81,7 @@ fn main(
     setState(() {
       _result =
           outputData.sublist(0, 16).map((value) => value.toDouble()).toList();
+      print('Result: $_result');
     });
   }
 

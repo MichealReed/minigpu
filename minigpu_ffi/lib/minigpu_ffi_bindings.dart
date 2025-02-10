@@ -185,7 +185,7 @@ class minigpuFfiBindings {
 
   void mgpuReadBufferSync(
     ffi.Pointer<MGPUBuffer> buffer,
-    ffi.Pointer<ffi.Void> outputData,
+    ffi.Pointer<ffi.Float> outputData,
     int size,
   ) {
     return _mgpuReadBufferSync(
@@ -197,10 +197,10 @@ class minigpuFfiBindings {
 
   late final _mgpuReadBufferSyncPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>,
+          ffi.Void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Float>,
               ffi.Size)>>('mgpuReadBufferSync');
   late final _mgpuReadBufferSync = _mgpuReadBufferSyncPtr.asFunction<
-      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Void>, int)>();
+      void Function(ffi.Pointer<MGPUBuffer>, ffi.Pointer<ffi.Float>, int)>();
 
   void mgpuReadBufferAsync(
     ffi.Pointer<MGPUBuffer> buffer,

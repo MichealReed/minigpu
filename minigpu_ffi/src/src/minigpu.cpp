@@ -55,17 +55,9 @@ extern "C"
 
     MGPUBuffer *mgpuCreateBuffer(int size, int memSize)
     {
-
-        MGPUBuffer *buffer;
-        if (size > 0 && memSize > 0)
-        {
-            return reinterpret_cast<MGPUBuffer *>(new mgpu::Buffer(minigpu));
-        }
-        else
-        {
-            LOG(kDefLog, kError, "Invalid buffer pointer");
-            return nullptr;
-        }
+        auto *buf = new mgpu::Buffer(minigpu);
+        buf->createBuffer(size, memSize);
+        return reinterpret_cast<MGPUBuffer *>(buf);
     }
 
     void mgpuDestroyBuffer(MGPUBuffer *buffer)
@@ -105,7 +97,7 @@ extern "C"
         }
     }
 
-    void mgpuReadBufferSync(MGPUBuffer *buffer, void *outputData, size_t size)
+    void mgpuReadBufferSync(MGPUBuffer *buffer, float *outputData, size_t size)
     {
         if (buffer && outputData)
         {
