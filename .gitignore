@@ -29,4 +29,4 @@ doc/api/
 .flutter-plugins-dependencies
 
 third_party/*
-minigpu_ffi/src/external/*
+minigpu_ffi/src/external/dawn/*
