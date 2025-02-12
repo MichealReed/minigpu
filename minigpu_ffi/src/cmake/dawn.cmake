@@ -13,6 +13,11 @@ else()
     )
 endif()
 
+# There's a issue where only the first flutter build can find headers
+# so the first build succeeds, but the second+ fails unless you flutter clean
+# including the directories again doesnt seem to work, maybe a problem
+# with the flutter tooling for MSVC CMake
+
 if(NOT WEBGPU_DAWN_MONOLITHIC)
     message("webgpu_dawn not found start building")
     set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/dawn")
