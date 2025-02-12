@@ -4,7 +4,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/download.cmake")
 
 
 
-download_repository("dawn" "https://github.com/AnswerDotAI/gpu.cpp" "${EXT_SOURCE_DIR}/gpu")
+download_repository("gpu" "https://github.com/AnswerDotAI/gpu.cpp" "${EXT_SOURCE_DIR}/gpu")
 
 set(GPU_INCLUDE_DIR "${EXT_SOURCE_DIR}/gpu")
 

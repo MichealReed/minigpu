@@ -132,10 +132,12 @@ target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
 endif()
 
 target_link_libraries(gpu PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
+target_link_libraries(${MAIN_LIB} PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
 if(NOT EMSCRIPTEN)
 target_link_libraries(minigpu_test PRIVATE gpu)
+target_link_libraries(minigpu_test PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
 target_link_libraries(minigpu_test PRIVATE ${MAIN_LIB})
 endif()
 

@@ -28,11 +28,10 @@ ffigen:
   headers:
     entry-points:
       - "src/include/minigpu.h"
-      - "src/include/engine.h"
-      - "src/include/sound.h"
-      - "src/include/record.h"
+      - "src/include/buffer.h"
+      - "src/include/computer_shader.h"
+      - "src/include/gpuh.h"
       - "src/include/generator.h"
-      - "src/include/circular_buffer.h"
     include-directives:
       - "src/include/*.h"
       - "/usr/lib/clang/18/include/stdbool.h"
