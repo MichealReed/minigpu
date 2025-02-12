@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:minigpu/minigpu.dart';
@@ -59,7 +60,8 @@ fn main(
 
     final bufferSize = 100;
     final inputData = Float32List.fromList(
-      List<double>.generate(bufferSize, (i) => i / 10.0),
+      List<double>.generate(
+          bufferSize, (i) => i / 10.0 + Random().nextDouble()),
     );
     print('bufferSize: ${inputData.lengthInBytes}');
     final memSize = bufferSize * 4; // 4 bytes per float32
@@ -73,6 +75,7 @@ fn main(
     _shader.setBuffer('out', _outputBuffer);
 
     final workgroups = ((bufferSize + 255) / 256).floor();
+    _shader.dispatch('main', workgroups, 1, 1);
     _shader.dispatch('main', workgroups, 1, 1);
 
     final outputData = Float32List(bufferSize);

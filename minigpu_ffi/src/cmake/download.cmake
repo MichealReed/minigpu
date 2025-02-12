@@ -36,7 +36,7 @@ function(download_repository REPO_NAME REPO_URL REPO_PATH)
     else()
         message(STATUS "${REPO_NAME} repository already exists")
         execute_process(
-            COMMAND git fetch
+            COMMAND git fetch --quiet
             WORKING_DIRECTORY "${REPO_PATH}"
             RESULT_VARIABLE FETCH_RESULT
         )
