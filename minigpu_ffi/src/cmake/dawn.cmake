@@ -5,6 +5,7 @@ set(CMAKE_BUILD_TYPE  Release CACHE STRING "Choose the type of build: Debug or R
 # this speeds up work on shaders because waiting
 # for CMake build is slow anyways
 set(ENABLE_DAWN_FIND OFF CACHE BOOL "Enable finding Dawn" FORCE)
+set(DAWN_BUILD_FOUND OFF CACHE BOOL "Dawn build found" FORCE)
 if(ENABLE_DAWN_FIND)
     # find_library, windows adds extra folder
     if(MSVC)
@@ -12,11 +13,13 @@ if(ENABLE_DAWN_FIND)
         NAMES webgpu_dawn
         HINTS "${DAWN_BUILD_DIR}/src/dawn/native/${CMAKE_BUILD_TYPE}"
         )
+        set(DAWN_BUILD_FOUND ON)
     else()
         find_library(WEBGPU_DAWN_MONOLITHIC
         NAMES webgpu_dawn
         PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
         )
+        set(DAWN_BUILD_FOUND ON)
     endif()
 endif()
 
@@ -25,7 +28,8 @@ endif()
 # including the directories again doesnt seem to work, maybe a problem
 # with the flutter tooling for MSVC CMake
 
-if(NOT WEBGPU_DAWN_MONOLITHIC)
+if(NOT DAWN_BUILD_FOUND)
+    include(FetchContent)
     message("webgpu_dawn not found start building")
     set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/dawn")
 
