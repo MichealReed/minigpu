@@ -1,16 +1,23 @@
 set(CMAKE_BUILD_TYPE  Release CACHE STRING "Choose the type of build: Debug or Release" FORCE)
 
-# find_library, windows adds extra folder
-if(MSVC)
-    find_library(WEBGPU_DAWN_MONOLITHIC
-    NAMES webgpu_dawn
-    HINTS "${DAWN_BUILD_DIR}/src/dawn/native/${CMAKE_BUILD_TYPE}"
-    )
-else()
-    find_library(WEBGPU_DAWN_MONOLITHIC
-    NAMES webgpu_dawn
-    PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
-    )
+# There's an issue where flutter requires a clean or
+# the ephemeral build cannot find the headers
+# this speeds up work on shaders because waiting
+# for CMake build is slow anyways
+set(ENABLE_DAWN_FIND OFF CACHE BOOL "Enable finding Dawn" FORCE)
+if(ENABLE_DAWN_FIND)
+    # find_library, windows adds extra folder
+    if(MSVC)
+        find_library(WEBGPU_DAWN_MONOLITHIC
+        NAMES webgpu_dawn
+        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/${CMAKE_BUILD_TYPE}"
+        )
+    else()
+        find_library(WEBGPU_DAWN_MONOLITHIC
+        NAMES webgpu_dawn
+        PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
+        )
+    endif()
 endif()
 
 # There's a issue where only the first flutter build can find headers
@@ -52,8 +59,9 @@ if(NOT WEBGPU_DAWN_MONOLITHIC)
 
     set(DAWN_SRC_DIR "${FETCHCONTENT_BASE_DIR}/dawn-src" CACHE INTERNAL "")
     set(DAWN_BUILD_DIR "${FETCHCONTENT_BASE_DIR}/dawn-build" CACHE INTERNAL "")
-    set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH};${DAWN_SRC_DIR}/src" CACHE INTERNAL "")
 
+    # attempt fix flutter rebuilds
+    set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH};${DAWN_SRC_DIR}/src" CACHE INTERNAL "")
     include_directories("${DAWN_SRC_DIR}/src")
 
     execute_process(
