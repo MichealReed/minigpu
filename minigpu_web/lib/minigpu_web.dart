@@ -47,8 +47,8 @@ class WebComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void setBuffer(String kernel, String tag, PlatformBuffer buffer) {
-    wasm.mgpuSetBuffer(_shader, kernel, tag, (buffer as WebBuffer)._buffer);
+  void setBuffer(String tag, PlatformBuffer buffer) {
+    wasm.mgpuSetBuffer(tag, (buffer as WebBuffer)._buffer);
   }
 
   @override

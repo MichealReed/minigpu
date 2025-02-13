@@ -76,12 +76,10 @@ void mgpuDestroyBuffer(MGPUBuffer buffer) {
 }
 
 @JS('_mgpuSetBuffer')
-external void _mgpuSetBuffer(
-    MGPUComputeShader shader, JSString kernel, JSString tag, MGPUBuffer buffer);
+external void _mgpuSetBuffer(JSString tag, MGPUBuffer buffer);
 
-void mgpuSetBuffer(
-    MGPUComputeShader shader, String kernel, String tag, MGPUBuffer buffer) {
-  _mgpuSetBuffer(shader, kernel.toJS, tag.toJS, buffer);
+void mgpuSetBuffer(String tag, MGPUBuffer buffer) {
+  _mgpuSetBuffer(tag.toJS, buffer);
 }
 
 // Dispatch functions
