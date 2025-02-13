@@ -22,7 +22,7 @@ WEB_DIR := .$(SLASH)minigpu_web$(SLASH)
 minigpu_DIR := .$(SLASH)minigpu$(SLASH)
 EXAMPLE_DIR := .$(SLASH)minigpu$(SLASH)example$(SLASH)
 SRC_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)
-BUILD_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)build$(SLASH)
+BUILD_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)external$(SLASH)dawn$(SLASH)build$(SLASH)
 BUILD_WEB_DIR := .$(SLASH)minigpu_ffi$(SLASH)src$(SLASH)build_web$(SLASH)
 VERSION ?= 1.0.0
 

@@ -14,15 +14,16 @@
 #include <unordered_map>
 #include <utility> // std::pair
 #include <vector>
-
 #include "webgpu/webgpu.h"
+
+#ifndef __EMSCRIPTEN__
+
+#else
+#include "emscripten/emscripten.h"
+#endif
 
 #include "numeric_types/half.hpp"
 #include "utils/logging.hpp"
-
-#ifdef __EMSCRIPTEN__
-#include "emscripten/emscripten.h"
-#endif
 
 #ifdef USE_DAWN_API
 #include "dawn/native/DawnNative.h"
@@ -908,6 +909,7 @@ inline Context createContext(
     ctx.device = devData.device;
     ctx.deviceStatus = devData.status;
 
+    #ifndef __EMSCRIPTEN__
     // If the device was created, set up logging and fetch the queue
     if (devData.status == WGPURequestDeviceStatus_Success) {
       WGPULoggingCallbackInfo loggingCallbackInfo {
@@ -927,6 +929,7 @@ inline Context createContext(
       wgpuDeviceSetLoggingCallback(ctx.device, loggingCallbackInfo);
       ctx.queue = wgpuDeviceGetQueue(ctx.device);
     }
+    #endif
   }
 
   return std::move(ctx);
@@ -1206,7 +1209,7 @@ inline void toCPU(Context &ctx, WGPUBuffer buffer, void *data, size_t size) {
   }
   wgpuQueueSubmit(ctx.queue, 1, &op.commandBuffer);
   wgpuCommandBufferRelease(op.commandBuffer);
-  CallbackData callbackData = {op.readbackBuffer, bufferSize, data, &op.promise,
+  CallbackData callbackData = {op.readbackBuffer, static_cast<size_t>(bufferSize), data, &op.promise,
                                &op.future};
 
   WGPUQueueWorkDoneCallbackInfo workDoneCallbackInfo = {

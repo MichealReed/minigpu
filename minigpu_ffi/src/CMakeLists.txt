@@ -18,6 +18,24 @@ endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
 
+if(EMSCRIPTEN)
+include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
+include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu)
+include_directories(${DAWN_DIR}/third_party/emdawnwebgpu/)
+include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
+include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
+include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
+include_directories(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
+include_directories(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/webgpu.cpp)
+target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
+target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
+target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
+target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
+target_link_libraries(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
+target_link_libraries(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/webgpu.cpp)
+endif()
+
+
 if(NOT EMSCRIPTEN)
     set(MAIN_LIB minigpu_ffi)
 else()
@@ -32,7 +50,7 @@ set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/build)
 if(NOT EMSCRIPTEN)
     add_library(${MAIN_LIB} SHARED)
 else()
-    add_executable(${MAIN_LIB})
+    add_library(${MAIN_LIB})
 endif()
 
 file(GLOB_RECURSE MAIN_SOURCES
@@ -67,19 +85,18 @@ target_compile_definitions(${MAIN_LIB} PUBLIC
 if(NOT EMSCRIPTEN)
 
 else()
-    set_target_properties(${MAIN_LIB} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${WEB_OUTPUT_DIR}
-    )
     target_compile_options(${MAIN_LIB} PUBLIC
-        -O2
-        -flto -fno-rtti
     )
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
-        -O2 \
-        -flto \
-        -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy -sEXPORTED_RUNTIME_METHODS=ccall \
-        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb -sUSE_WEBGPU=1 -sASYNCIFY\
-    ")
+        -sUSE_WEBGPU=0 \
+        -DDAWN_EMSCRIPTEN_TOOLCHAIN=${DAWN_EMSCRIPTEN_TOOLCHAIN} \
+        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js" \
+        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js" \
+        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js" \
+        "--js-library=${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js" \
+        "--closure-args=--externs=${EMSCRIPTEN_DIR}/src/closure-externs/webgpu-externs.js" \
+        -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3 \
+        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb  -sASYNCIFY -lembind    ")
 endif()
 
 # Main JS
@@ -148,7 +165,7 @@ set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
 
 message(STATUS "Runner folder: ${RUNNER_FOLDER}")
 
-message(STATUS "DAWN BUILD DIR ${DAWN_BUILD_DIR}/Release")
+message(STATUS "DAWN BUILD DIR ${DAWN_DIR}/Release")
 
 if(MSVC)
     # Copy webgpu_dawn.dll to the build directory
