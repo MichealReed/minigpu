@@ -18,23 +18,6 @@ endif()
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
 
-if(EMSCRIPTEN)
-include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
-include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu)
-include_directories(${DAWN_DIR}/third_party/emdawnwebgpu/)
-include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
-include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
-include_directories(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
-include_directories(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
-include_directories(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/webgpu.cpp)
-target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
-target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
-target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
-target_link_libraries(gpu PUBLIC ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
-target_link_libraries(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
-target_link_libraries(gpu PUBLIC ${DAWN_DIR}/third_party/emdawnwebgpu/webgpu.cpp)
-endif()
-
 
 if(NOT EMSCRIPTEN)
     set(MAIN_LIB minigpu_ffi)
@@ -58,22 +41,6 @@ file(GLOB_RECURSE MAIN_SOURCES
 )
 
 
-file(GLOB_RECURSE MAIN_INCLUDES LIST_DIRECTORIES TRUE
-    ${MAIN_PATH}/external/include/gpu/*
-)
-
-if(NOT EMSCRIPTEN)
-    list(APPEND MAIN_INCLUDES ${MAIN_PATH}/include/gpu/*)
-else()
-    # Exclude webgpu/webgpu.h when using Emscripten
-    list(APPEND MAIN_INCLUDES
-        ${MAIN_PATH}/include/gpu/gpu.hpp
-        ${MAIN_PATH}/include/gpu/utils/logging.hpp
-        ${MAIN_PATH}/include/gpu/utils/array_utils.h
-        ${MAIN_PATH}/include/gpu/numeric_types/half.hpp
-    )
-endif()
-
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
 
 # Definitions
@@ -89,12 +56,8 @@ else()
     )
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
         -sUSE_WEBGPU=0 \
+        -sWASM=1 \
         -DDAWN_EMSCRIPTEN_TOOLCHAIN=${DAWN_EMSCRIPTEN_TOOLCHAIN} \
-        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js" \
-        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js" \
-        "--js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js" \
-        "--js-library=${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js" \
-        "--closure-args=--externs=${EMSCRIPTEN_DIR}/src/closure-externs/webgpu-externs.js" \
         -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3 \
         -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb  -sASYNCIFY -lembind    ")
 endif()
@@ -148,8 +111,8 @@ else()
 target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
 endif()
 
-target_link_libraries(gpu PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
-target_link_libraries(${MAIN_LIB} PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
+target_link_libraries(gpu PRIVATE webgpu_dawn)
+target_link_libraries(${MAIN_LIB} PRIVATE webgpu_dawn)
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
 if(NOT EMSCRIPTEN)
@@ -189,7 +152,6 @@ if(MSVC)
                     ${RUNNER_FOLDER}/Release/webgpu_dawn.dll
             COMMENT "Copying webgpu_dawn.dll to runner folder")   
 endif()
-
 
 # Additional libs
 if(ANDROID)

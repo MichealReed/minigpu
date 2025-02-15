@@ -1,3 +1,5 @@
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/print_target.cmake")
 set(CMAKE_BUILD_TYPE  Release CACHE STRING "Choose the type of build: Debug or Release" FORCE)
 # Setup directories
 set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
@@ -10,10 +12,7 @@ if(EMSCRIPTEN)
     set(DAWN_BUILD_DIR "${DAWN_DIR}/build_web" CACHE INTERNAL "")
 endif()
 
-# There's an issue where flutter requires a clean or
-# the ephemeral build cannot find the headers
-# this speeds up work on shaders because waiting
-# for CMake build is slow anyways
+# Enable find for no dawn rebuilds with flutter run
 set(ENABLE_DAWN_FIND OFF CACHE BOOL "Enable finding Dawn" FORCE)
 set(DAWN_BUILD_FOUND OFF CACHE BOOL "Dawn build found" FORCE)
 if(ENABLE_DAWN_FIND)
@@ -45,12 +44,6 @@ set(DAWN_FETCH_DEPENDENCIES ON  CACHE INTERNAL "Fetch Dawn dependencies" FORCE)
 set(TINT_BUILD_TESTS        OFF CACHE INTERNAL "Build Tint Tests" FORCE)
 set(TINT_BUILD_IR_BINARY    OFF CACHE INTERNAL "Build Tint IR binary" FORCE)
 set(TINT_BUILD_CMD_TOOLS   OFF CACHE INTERNAL "Build Tint command line tools" FORCE)
-set(BUILD_SHARED_LIBS       OFF CACHE INTERNAL "Build shared libraries" FORCE)
-
-# There's a issue where only the first flutter build can find headers
-# so the first build succeeds, but the second+ fails unless you flutter clean
-# including the directories again doesnt seem to work, maybe a problem
-# with the flutter tooling for MSVC CMake
 
 if(NOT DAWN_BUILD_FOUND)
     include(FetchContent)
@@ -78,7 +71,6 @@ if(NOT DAWN_BUILD_FOUND)
 
     # attempt fix flutter rebuilds
     set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH};${DAWN_DIR}/src" CACHE INTERNAL "")
-    include_directories("${DAWN_DIR}/src")
 
     execute_process(
         WORKING_DIRECTORY ${DAWN_DIR}
@@ -91,11 +83,6 @@ if(NOT DAWN_BUILD_FOUND)
     execute_process(
         COMMAND ${CMAKE_COMMAND} --build ${DAWN_BUILD_DIR} --config ${CMAKE_BUILD_TYPE}
     )
-
-    if(EMSCRIPTEN)
-        include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include)
-        include_directories(${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu)
-    endif()
     
     # find_library, windows adds extra folder
     if(MSVC)
@@ -117,3 +104,19 @@ if(NOT DAWN_BUILD_FOUND)
     endif()
 
 endif()
+
+message("webgpu_dawn found at ${WEBGPU_DAWN_MONOLITHIC}")
+
+
+if(EMSCRIPTEN)
+    add_library(webgpu_dawn INTERFACE IMPORTED)
+    target_include_directories(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include)
+    target_include_directories(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
+    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
+    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
+    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
+    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
+else()
+
+endif()
+#print_target(webgpu_dawn)
