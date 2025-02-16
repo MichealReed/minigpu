@@ -36,7 +36,9 @@ void mgpuDestroyContext() {
 external MGPUComputeShader _mgpuCreateComputeShader();
 
 MGPUComputeShader mgpuCreateComputeShader() {
-  return _mgpuCreateComputeShader();
+  MGPUComputeShader shader = _mgpuCreateComputeShader();
+  print("SHADER PTR  $shader");
+  return shader;
 }
 
 @JS('_mgpuDestroyComputeShader')
@@ -47,10 +49,10 @@ void mgpuDestroyComputeShader(MGPUComputeShader shader) {
 }
 
 @JS('_mgpuLoadKernel')
-external void _mgpuLoadKernel(MGPUComputeShader shader, JSString kernelString);
+external void _mgpuLoadKernel(MGPUComputeShader shader, String kernelString);
 
 void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
-  _mgpuLoadKernel(shader, kernelString.toJS);
+  _mgpuLoadKernel(shader, kernelString);
 }
 
 @JS('_mgpuHasKernel')
@@ -76,10 +78,11 @@ void mgpuDestroyBuffer(MGPUBuffer buffer) {
 }
 
 @JS('_mgpuSetBuffer')
-external void _mgpuSetBuffer(JSString tag, MGPUBuffer buffer);
+external void _mgpuSetBuffer(
+    MGPUComputeShader shader, JSString tag, MGPUBuffer buffer);
 
-void mgpuSetBuffer(String tag, MGPUBuffer buffer) {
-  _mgpuSetBuffer(tag.toJS, buffer);
+void mgpuSetBuffer(MGPUComputeShader shader, String tag, MGPUBuffer buffer) {
+  _mgpuSetBuffer(shader, tag.toJS, buffer);
 }
 
 // Dispatch functions

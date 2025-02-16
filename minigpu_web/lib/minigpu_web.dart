@@ -25,7 +25,7 @@ class MinigpuWeb extends MinigpuPlatform {
   }
 
   @override
-  PlatformBuffer createBuffer(dynamic size, int memSize) {
+  PlatformBuffer createBuffer(int size, int memSize) {
     final buff = wasm.mgpuCreateBuffer(size, memSize);
     return WebBuffer(buff);
   }
@@ -48,7 +48,8 @@ class WebComputeShader implements PlatformComputeShader {
 
   @override
   void setBuffer(String tag, PlatformBuffer buffer) {
-    wasm.mgpuSetBuffer(tag, (buffer as WebBuffer)._buffer);
+    // Updated: Pass the shader pointer as first argument
+    wasm.mgpuSetBuffer(_shader, tag, (buffer as WebBuffer)._buffer);
   }
 
   @override
@@ -72,8 +73,10 @@ class WebBuffer implements PlatformBuffer {
     wasm.mgpuReadBufferSync(_buffer, outputData, size);
   }
 
-  void readAsync(dynamic outputData, int size,
+  @override
+  void readAsync(Float32List outputData, int size,
       void Function(Float32List) callback, dynamic userData) {
+    // Updated to remove the unused userData parameter and use proper types.
     wasm.mgpuReadBufferAsync(_buffer, outputData, size, callback);
   }
 

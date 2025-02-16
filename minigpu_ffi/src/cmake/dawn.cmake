@@ -3,7 +3,7 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/print_target.cmake")
 # Setup directories
 set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(EM_SDK_DIR $ENV{EMSDK} CACHE INTERNAL "")
-set(EMSCRIPTEN_DIR "${FETCHCONTENT_BASE_DIR}/emscripten" CACHE INTERNAL "")
+set(EMSCRIPTEN_DIR "${EM_SDK_DIR}/upstream/emscripten" CACHE INTERNAL "")
 set(DAWN_DIR "${FETCHCONTENT_BASE_DIR}/dawn" CACHE INTERNAL "")
 set(DAWN_BUILD_DIR "${DAWN_DIR}/build" CACHE INTERNAL "")
 
@@ -12,7 +12,7 @@ if(EMSCRIPTEN)
 endif()
 
 # Enable find for no dawn rebuilds with flutter run
-set(ENABLE_DAWN_FIND OFF CACHE BOOL "Enable finding Dawn" FORCE)
+set(ENABLE_DAWN_FIND ON CACHE BOOL "Enable finding Dawn" FORCE)
 set(DAWN_BUILD_FOUND OFF CACHE BOOL "Dawn build found" FORCE)
 if(ENABLE_DAWN_FIND)
     # find_library, windows adds extra folder
@@ -56,7 +56,6 @@ if(NOT DAWN_BUILD_FOUND)
     message("webgpu_dawn not found start building")
     if(EMSCRIPTEN)
         set(EMSCRIPTEN_DIR "${EM_SDK_DIR}/upstream/emscripten" CACHE INTERNAL "" FORCE)
-        set(DAWN_EMSCRIPTEN_TOOLCHAIN ${EMSCRIPTEN_DIR} CACHE INTERNAL "" FORCE)
     endif()
 
     FetchContent_Declare(
@@ -111,21 +110,6 @@ if(NOT DAWN_BUILD_FOUND)
     else()
         set(DAWN_BUILD_FOUND ON)
     endif()
-
-endif()
-
-message("webgpu_dawn found at ${WEBGPU_DAWN_MONOLITHIC}")
-
-
-if(EMSCRIPTEN)
-    add_library(webgpu_dawn INTERFACE IMPORTED)
-    target_include_directories(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include)
-    target_include_directories(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/webgpu.h)
-    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js)
-    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js)
-    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js)
-    target_link_libraries(webgpu_dawn INTERFACE ${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js)
-else()
 
 endif()
 #print_target(webgpu_dawn)

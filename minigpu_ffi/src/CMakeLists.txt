@@ -2,76 +2,120 @@ cmake_minimum_required(VERSION 3.5)
 project(minigpu_ffi VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 
-# Configure the find_root.cmake script
+# ─── Locate the Project Root ─────────────────────────────────────────────
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
-
-# Call the function to find the project root
 find_project_root("${CMAKE_CURRENT_SOURCE_DIR}" "${FILENAME}" TARGET_FILE_PATH)
-
-# Check if the target file path was found
 if(TARGET_FILE_PATH)
     message(STATUS "Project root found at ${TARGET_FILE_PATH}")
 else()
     message(FATAL_ERROR "File ${FILENAME} not found within 8 levels up from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
+# ─── Include Additional CMake Modules ──────────────────────────────────────
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
 
-
+# ─── Define Main Target Names and Paths ───────────────────────────────────
 if(NOT EMSCRIPTEN)
     set(MAIN_LIB minigpu_ffi)
 else()
     set(MAIN_LIB minigpu_web)
-    set(MAIN_JS minigpu_web_js)
+    set(MAIN_JS  minigpu_web_js)
 endif()
 
-set(MAIN_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-set(MAIN_OUT_PATH ${CMAKE_CURRENT_BINARY_DIR})
+set(MAIN_PATH      ${CMAKE_CURRENT_SOURCE_DIR})
+set(MAIN_OUT_PATH  ${CMAKE_CURRENT_BINARY_DIR})
 set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/build)
 
+# ─── Create the Main Target ──────────────────────────────────────────────
 if(NOT EMSCRIPTEN)
     add_library(${MAIN_LIB} SHARED)
 else()
-    add_library(${MAIN_LIB})
+    add_executable(${MAIN_LIB})
 endif()
 
-file(GLOB_RECURSE MAIN_SOURCES
-    ${MAIN_PATH}/src/*.cpp
-)
-
-
+# ─── Add Source Files and Include Directories ─────────────────────────────
+file(GLOB_RECURSE MAIN_SOURCES "${MAIN_PATH}/src/*.cpp")
+target_sources(${MAIN_LIB} PRIVATE ${MAIN_SOURCES})
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
+target_compile_definitions(${MAIN_LIB} PUBLIC DART_SHARED_LIB)
 
-# Definitions
-target_compile_definitions(${MAIN_LIB} PUBLIC 
-    DART_SHARED_LIB
-)
+# ─── EMSCRIPTEN-Specific Settings ──────────────────────────────────────────
+if(EMSCRIPTEN)
+    # Include generated include directory before system includes
+    include_directories(BEFORE "${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/")
 
-# Set properties
-if(NOT EMSCRIPTEN)
+    # Create a helper library for WebGPU (from Dawn)
+    add_library(webgpu_web "${DAWN_DIR}/third_party/emdawnwebgpu/webgpu.cpp")
 
-else()
-    target_compile_options(${MAIN_LIB} PUBLIC
-    )
+    message(STATUS "toolchain dir ${EMSCRIPTEN_DIR}")
+    # (Additional compile options could be added here)
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
         -sUSE_WEBGPU=0 \
         -sWASM=1 \
-        -DDAWN_EMSCRIPTEN_TOOLCHAIN=${DAWN_EMSCRIPTEN_TOOLCHAIN} \
-        -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy -sEXPORTED_RUNTIME_METHODS=ccall -sUSE_GLFW=3 \
-        -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=1gb  -sASYNCIFY -lembind    ")
+        -DDAWN_EMSCRIPTEN_TOOLCHAIN=${EMSCRIPTEN_DIR} \
+        -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy \
+        -sEXPORTED_RUNTIME_METHODS=ccall \
+        -sUSE_GLFW=3 \
+        -sALLOW_MEMORY_GROWTH \
+        -sMAXIMUM_MEMORY=1gb \
+        -sASYNCIFY \
+        --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js \
+        --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js \
+        --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js \
+        --js-library=${DAWN_DIR}/third_party/emdawnwebgpu/library_webgpu.js \
+        --closure-args=--externs=${EMSCRIPTEN_DIR}/src/closure-externs/webgpu-externs.js \
+    ")
 endif()
 
-# Main JS
+# ─── Add Test Target (Non-Emscripten Only) ─────────────────────────────────
+if(NOT EMSCRIPTEN)
+    set(TEST_SOURCES "${MAIN_PATH}/test/minigpu_test.cpp")
+    add_executable(minigpu_test ${TEST_SOURCES})
+    # For tests, you may also want to expose the test sources in the main target;
+    # adjust the following as needed
+    target_link_libraries(minigpu_test PRIVATE gpu ${WEBGPU_DAWN_MONOLITHIC} ${MAIN_LIB})
+endif()
+
+# ─── Link Libraries ────────────────────────────────────────────────────────
+if(MSVC)
+    target_link_libraries(gpu PRIVATE 
+        $<$<CONFIG:Debug>:${WEBGPU_DAWN_DEBUG}>
+        $<$<CONFIG:Release>:${WEBGPU_DAWN_RELEASE}>
+    )
+elseif(NOT EMSCRIPTEN)
+    target_link_libraries(gpu PRIVATE webgpu_dawn)
+else()  # EMSCRIPTEN
+    target_link_libraries(${MAIN_LIB} PRIVATE webgpu_web)
+endif()
+target_link_libraries(${MAIN_LIB} PRIVATE gpu)
+
+# ─── MSVC Specific: Copy DLL to Runner Folder ─────────────────────────────
+get_filename_component(RUNNER_FOLDER ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
+get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
+get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
+set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
+
+if(MSVC)
+    add_custom_command(TARGET ${MAIN_LIB} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${DAWN_BUILD_DIR}/$<CONFIG>/webgpu_dawn.dll
+                ${RUNNER_FOLDER}/$<CONFIG>/webgpu_dawn.dll
+        COMMENT "Copying webgpu_dawn.dll to runner folder"
+    )
+endif()
+
+# ─── EMSCRIPTEN: Copy JS Sources and Build Outputs to WEB_OUTPUT_DIR ─────
 if(EMSCRIPTEN)
-    file(GLOB JS_SOURCES ${MAIN_PATH}/js/*.js)
-    set(JS_OUTPUTS)
+    # 1. Copy additional JS sources (e.g. support libraries) from the build_web folder
+    file(GLOB JS_SOURCES "${MAIN_PATH}/build_web/*.js")
+    set(JS_OUTPUTS "")
     foreach(JS_FILE ${JS_SOURCES})
         get_filename_component(JS_FILENAME ${JS_FILE} NAME)
-        set(JS_OUTPUT ${WEB_OUTPUT_DIR}/${JS_FILENAME})
+        set(JS_OUTPUT "${WEB_OUTPUT_DIR}/${JS_FILENAME}")
         list(APPEND JS_OUTPUTS ${JS_OUTPUT})
         add_custom_command(
-            OUTPUT ${JS_OUTPUT}
+            OUTPUT  ${JS_OUTPUT}
             COMMAND ${CMAKE_COMMAND} -E copy ${JS_FILE} ${JS_OUTPUT}
             DEPENDS ${JS_FILE}
             COMMENT "Copying ${JS_FILENAME} to web output directory"
@@ -79,71 +123,23 @@ if(EMSCRIPTEN)
     endforeach()
     add_custom_target(${MAIN_JS} ALL
         DEPENDS ${JS_OUTPUTS}
-        COMMENT "Copying JS sources to web output directory"
-    )
-    add_dependencies(${MAIN_LIB} ${MAIN_JS})
-
-    # Configure the modify_js.cmake script
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake.in
-        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake
-        @ONLY
+        COMMENT "Copying JS support files to web output directory"
     )
 
-    # Add custom command to modify the output JS file
-    add_custom_command(
-        TARGET ${MAIN_LIB} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Modifying ${MAIN_LIB}.js to use locateFile"
-        COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modify_js.cmake
-        WORKING_DIRECTORY ${WEB_OUTPUT_DIR}
-        COMMENT "Post-processing ${MAIN_LIB}.js"
-    )
-endif()
-
-set(TEST_SOURCES
-    ${MAIN_PATH}/test/minigpu_test.cpp
-)
-
-If(NOT EMSCRIPTEN)
-add_executable(minigpu_test ${TEST_SOURCES})
-target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES} ${TEST_SOURCES})
-else()
-target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
-endif()
-
-
-if(MSVC)
-    target_link_libraries(gpu 
-        PRIVATE 
-            $<$<CONFIG:Debug>:${WEBGPU_DAWN_DEBUG}>
-            $<$<CONFIG:Release>:${WEBGPU_DAWN_RELEASE}>
-    )
-else()
-    target_link_libraries(gpu PRIVATE webgpu_dawn)
-endif()
-target_link_libraries(${MAIN_LIB} PRIVATE gpu)
-
-if(NOT EMSCRIPTEN)
-target_link_libraries(minigpu_test PRIVATE gpu)
-target_link_libraries(minigpu_test PRIVATE ${WEBGPU_DAWN_MONOLITHIC})
-target_link_libraries(minigpu_test PRIVATE ${MAIN_LIB})
-endif()
-
-get_filename_component(RUNNER_FOLDER ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
-get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
-get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
-set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
-
-if(MSVC)
-    add_custom_command(
-        TARGET ${MAIN_LIB} POST_BUILD
+    # 2. Copy the EMSCRIPTEN-built JS and WASM output files to WEB_OUTPUT_DIR.
+    #    (We assume the output files are named after MAIN_LIB.)
+    add_custom_command(TARGET ${MAIN_LIB} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${DAWN_BUILD_DIR}/$<CONFIG>/webgpu_dawn.dll
-                ${RUNNER_FOLDER}/$<CONFIG>/webgpu_dawn.dll
-        COMMENT "Copying webgpu_dawn.dll to runner folder")
+                ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_LIB}.js
+                ${WEB_OUTPUT_DIR}/${MAIN_LIB}.js
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_BINARY_DIR}/${MAIN_LIB}.wasm
+                ${WEB_OUTPUT_DIR}/${MAIN_LIB}.wasm
+        COMMENT "Copying output JS and WASM to web output directory"
+    )
 endif()
 
-# Additional libs
+# ─── Android Specific Linking ─────────────────────────────────────────────
 if(ANDROID)
     target_link_libraries(${MAIN_LIB} OpenSLES log)
 endif()

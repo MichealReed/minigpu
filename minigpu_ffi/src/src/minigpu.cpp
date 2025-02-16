@@ -30,14 +30,31 @@ extern "C"
 
     void mgpuLoadKernel(MGPUComputeShader *shader, const char *kernelString)
     {
-        if (shader && kernelString)
+        if (!shader)
         {
-            reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelString(kernelString);
+            gpu::LOG(kDefLog, kError, "Invalid shader pointer (null)");
+            return;
         }
-        else
+
+        if (!kernelString)
         {
-            gpu::LOG(kDefLog, kError, "Invalid shader or kernelString pointer");
+            gpu::LOG(kDefLog, kError, "Invalid kernelString pointer (null)");
+            return;
         }
+
+        if (strlen(kernelString) == 0)
+        {
+            gpu::LOG(kDefLog, kError, "Empty kernel string provided");
+            return;
+        }
+
+        // Log first 100 characters of the kernel string for debugging
+        char previewStr[101] = {0};
+        strncpy(previewStr, kernelString, 100);
+        gpu::LOG(kDefLog, kInfo, "Loading kernel (preview): %s%s",
+                 previewStr, strlen(kernelString) > 100 ? "..." : "");
+
+        reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelString(kernelString);
     }
 
     int mgpuHasKernel(MGPUComputeShader *shader)
