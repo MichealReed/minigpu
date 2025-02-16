@@ -1,6 +1,5 @@
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/print_target.cmake")
-set(CMAKE_BUILD_TYPE  Release CACHE STRING "Choose the type of build: Debug or Release" FORCE)
 # Setup directories
 set(FETCHCONTENT_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(EM_SDK_DIR $ENV{EMSDK} CACHE INTERNAL "")
@@ -18,16 +17,23 @@ set(DAWN_BUILD_FOUND OFF CACHE BOOL "Dawn build found" FORCE)
 if(ENABLE_DAWN_FIND)
     # find_library, windows adds extra folder
     if(MSVC)
-        find_library(WEBGPU_DAWN_MONOLITHIC
+        find_library(WEBGPU_DAWN_DEBUG webgpu_dawn
         NAMES webgpu_dawn
-        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/${CMAKE_BUILD_TYPE}"
+        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/Debug"
+        )
+        find_library(WEBGPU_DAWN_RELEASE webgpu_dawn
+        NAMES webgpu_dawn
+        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/Release"
+        )
+        set(DAWN_BUILD_FOUND ON)
+    elseif(NOT EMSCRIPTEN AND NOT MSVC)
+        find_library(WEBGPU_DAWN_LIB
+        NAMES webgpu_dawn
+        PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
+        REQUIRED
         )
         set(DAWN_BUILD_FOUND ON)
     else()
-        find_library(WEBGPU_DAWN_MONOLITHIC
-        NAMES webgpu_dawn
-        PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
-        )
         set(DAWN_BUILD_FOUND ON)
     endif()
 endif()
@@ -76,24 +82,27 @@ if(NOT DAWN_BUILD_FOUND)
         WORKING_DIRECTORY ${DAWN_DIR}
         COMMAND ${CMAKE_COMMAND} -S ${DAWN_DIR}
             -B ${DAWN_BUILD_DIR}
-            -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+            -DCMAKE_BUILD_TYPE=$<CONFIG>
     )
 
     # Build Dawn
     execute_process(
-        COMMAND ${CMAKE_COMMAND} --build ${DAWN_BUILD_DIR} --config ${CMAKE_BUILD_TYPE}
+        COMMAND ${CMAKE_COMMAND} --build ${DAWN_BUILD_DIR} --config $<CONFIG>
     )
     
     # find_library, windows adds extra folder
     if(MSVC)
-        find_library(WEBGPU_DAWN_MONOLITHIC
+        find_library(WEBGPU_DAWN_DEBUG webgpu_dawn
         NAMES webgpu_dawn
-        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/${CMAKE_BUILD_TYPE}"
-        REQUIRED
+        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/Debug"
+        )
+        find_library(WEBGPU_DAWN_RELEASE webgpu_dawn
+        NAMES webgpu_dawn
+        HINTS "${DAWN_BUILD_DIR}/src/dawn/native/Release"
         )
         set(DAWN_BUILD_FOUND ON)
-    elseif(NOT EMSCRIPTEN)
-        find_library(WEBGPU_DAWN_MONOLITHIC
+    elseif(NOT EMSCRIPTEN AND NOT MSVC)
+        find_library(WEBGPU_DAWN_LIB
         NAMES webgpu_dawn
         PATHS "${DAWN_BUILD_DIR}/src/dawn/native"
         REQUIRED

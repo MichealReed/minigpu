@@ -24,5 +24,9 @@ set(GPU_HEADERS
 add_library(gpu STATIC ${GPU_SOURCES} ${GPU_HEADERS})
 set_target_properties(gpu PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(gpu PUBLIC "${GPU_INCLUDE_DIR}")
-
-#print_target(gpu)
+if(NOT EMSCRIPTEN)
+    target_include_directories(gpu PUBLIC "${DAWN_BUILD_DIR}/gen/include/dawn/")
+else()
+    target_include_directories(gpu PUBLIC "${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/")
+    target_include_directories(gpu PUBLIC "${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/webgpu/")
+endif()

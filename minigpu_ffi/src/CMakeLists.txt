@@ -111,8 +111,16 @@ else()
 target_sources(${MAIN_LIB} PUBLIC ${MAIN_SOURCES})
 endif()
 
-target_link_libraries(gpu PRIVATE webgpu_dawn)
-target_link_libraries(${MAIN_LIB} PRIVATE webgpu_dawn)
+
+if(MSVC)
+    target_link_libraries(gpu 
+        PRIVATE 
+            $<$<CONFIG:Debug>:${WEBGPU_DAWN_DEBUG}>
+            $<$<CONFIG:Release>:${WEBGPU_DAWN_RELEASE}>
+    )
+else()
+    target_link_libraries(gpu PRIVATE webgpu_dawn)
+endif()
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
 if(NOT EMSCRIPTEN)
@@ -126,31 +134,13 @@ get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
 get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
 set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
 
-message(STATUS "Runner folder: ${RUNNER_FOLDER}")
-
-message(STATUS "DAWN BUILD DIR ${DAWN_DIR}/Release")
-
 if(MSVC)
-    # Copy webgpu_dawn.dll to the build directory
-    # CMake multigenerators like MSVC need --config Release on
-    # the cmake --build command or they will output to /Debug
-    find_file(WEBGPU_DLL
-    NAMES webgpu_dawn.dll
-    HINTS "${DAWN_BUILD_DIR}/Release"
-    REQUIRED
-    )
     add_custom_command(
         TARGET ${MAIN_LIB} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${WEBGPU_DLL}
-                ${RUNNER_FOLDER}/Debug/webgpu_dawn.dll
+                ${DAWN_BUILD_DIR}/$<CONFIG>/webgpu_dawn.dll
+                ${RUNNER_FOLDER}/$<CONFIG>/webgpu_dawn.dll
         COMMENT "Copying webgpu_dawn.dll to runner folder")
-    add_custom_command(
-            TARGET ${MAIN_LIB} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                    ${WEBGPU_DLL}
-                    ${RUNNER_FOLDER}/Release/webgpu_dawn.dll
-            COMMENT "Copying webgpu_dawn.dll to runner folder")   
 endif()
 
 # Additional libs
