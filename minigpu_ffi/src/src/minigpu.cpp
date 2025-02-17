@@ -48,12 +48,6 @@ extern "C"
             return;
         }
 
-        // Log first 100 characters of the kernel string for debugging
-        char previewStr[101] = {0};
-        strncpy(previewStr, kernelString, 100);
-        gpu::LOG(kDefLog, kInfo, "Loading kernel (preview): %s%s",
-                 previewStr, strlen(kernelString) > 100 ? "..." : "");
-
         reinterpret_cast<mgpu::ComputeShader *>(shader)->loadKernelString(kernelString);
     }
 

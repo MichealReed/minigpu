@@ -48,11 +48,17 @@ void mgpuDestroyComputeShader(MGPUComputeShader shader) {
   _mgpuDestroyComputeShader(shader);
 }
 
+@JS('allocateUTF8')
+external JSString allocateUTF8(String str);
+
 @JS('_mgpuLoadKernel')
-external void _mgpuLoadKernel(MGPUComputeShader shader, String kernelString);
+external void _mgpuLoadKernel(MGPUComputeShader shader, JSString kernelString);
 
 void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
-  _mgpuLoadKernel(shader, kernelString);
+  _mgpuLoadKernel(
+    shader,
+    allocateUTF8(kernelString),
+  );
 }
 
 @JS('_mgpuHasKernel')

@@ -55,10 +55,11 @@ if(EMSCRIPTEN)
         -sWASM=1 \
         -DDAWN_EMSCRIPTEN_TOOLCHAIN=${EMSCRIPTEN_DIR} \
         -sEXPORTED_FUNCTIONS=_malloc,_free,_memcpy \
-        -sEXPORTED_RUNTIME_METHODS=ccall \
+        -sEXPORTED_RUNTIME_METHODS=ccall,allocateUTF8,UTF8ToString \
         -sUSE_GLFW=3 \
         -sALLOW_MEMORY_GROWTH \
         -sMAXIMUM_MEMORY=1gb \
+        -sStackSize=16MB \
         -sASYNCIFY \
         --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js \
         --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js \
