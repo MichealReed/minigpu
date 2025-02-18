@@ -1,11 +1,23 @@
 @JS('Module')
 library minigpu_bindings;
 
+import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
 
 typedef MGPUBuffer = JSNumber;
 typedef MGPUComputeShader = JSNumber;
+
+// js interop
+@JS("HEAPU8")
+external JSUint8Array HEAPU8;
+
+@JS("HEAPF32")
+external JSFloat32Array HEAPF32;
+
+Uint8List get _heapU8 => HEAPU8.toDart;
+
+Float32List get _heapF32 => HEAPF32.toDart;
 
 @JS('_malloc')
 external JSNumber _malloc(JSNumber size);
@@ -52,13 +64,23 @@ void mgpuDestroyComputeShader(MGPUComputeShader shader) {
 external JSString allocateUTF8(String str);
 
 @JS('_mgpuLoadKernel')
-external void _mgpuLoadKernel(MGPUComputeShader shader, JSString kernelString);
+external void _mgpuLoadKernel(MGPUComputeShader shader, JSNumber kernelString);
 
 void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
-  _mgpuLoadKernel(
-    shader,
-    allocateUTF8(kernelString),
-  );
+  final bytes = utf8.encode(kernelString);
+  final kernelBytes = Uint8List(bytes.length + 1)
+    ..setRange(0, bytes.length, bytes)
+    ..[bytes.length] = 0; // null terminator
+
+  // Allocate memory for the string.
+  final allocSize = kernelBytes.length * kernelBytes.elementSizeInBytes;
+  final ptr = _malloc(allocSize.toJS);
+  try {
+    _heapU8.setAll(ptr.toDartInt, kernelBytes);
+    _mgpuLoadKernel(shader, ptr);
+  } finally {
+    _free(ptr);
+  }
 }
 
 @JS('_mgpuHasKernel')
@@ -146,15 +168,12 @@ external void _mgpuSetBufferData(
     MGPUBuffer buffer, JSNumber inputDataPtr, JSNumber size);
 
 void mgpuSetBufferData(MGPUBuffer buffer, Float32List inputData, int size) {
-  final byteSize = size * Float32List.bytesPerElement;
+  final byteSize = inputData.length * Float32List.bytesPerElement;
   final ptr = _malloc(byteSize.toJS);
 
   try {
-    // Copy data to the allocated memory
-    final jsArray = JSFloat32Array(inputData.buffer.toJS);
-    _memcpy(ptr, inputData.offsetInBytes.toJS, byteSize.toJS);
-
-    print(buffer);
+    // Copy inputData to HEAPF32 starting at the calculated index
+    _heapF32.setAll(ptr.toDartInt, inputData);
 
     // Call the WASM function with the pointer
     _mgpuSetBufferData(buffer, ptr, size.toJS);
