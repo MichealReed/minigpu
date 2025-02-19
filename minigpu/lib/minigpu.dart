@@ -75,7 +75,7 @@ final class Buffer {
   final PlatformBuffer _buffer;
 
   /// Reads data from the buffer synchronously.
-  void readSync(Float32List outputData, int size) =>
+  Future<void> readSync(Float32List outputData, int size) async =>
       _buffer.readSync(outputData, size);
 
   /// Reads data from the buffer asynchronously.

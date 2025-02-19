@@ -69,8 +69,8 @@ class WebBuffer implements PlatformBuffer {
   WebBuffer(this._buffer);
 
   @override
-  void readSync(Float32List outputData, int size) {
-    wasm.mgpuReadBufferSync(_buffer, outputData, size);
+  Future<void> readSync(Float32List outputData, int size) async {
+    await wasm.mgpuReadBufferSync(_buffer, outputData, size);
   }
 
   @override

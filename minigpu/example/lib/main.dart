@@ -60,8 +60,7 @@ fn main(
 
     final bufferSize = 100;
     final inputData = Float32List.fromList(
-      List<double>.generate(
-          bufferSize, (i) => i / 10.0 + Random().nextDouble()),
+      List<double>.generate(bufferSize, (i) => i / 10.0),
     );
     print('bufferSize: ${inputData.lengthInBytes}');
     final memSize = bufferSize * 4; // 4 bytes per float32
@@ -69,7 +68,7 @@ fn main(
     _inputBuffer = _minigpu.createBuffer(bufferSize, memSize);
     _outputBuffer = _minigpu.createBuffer(bufferSize, memSize);
 
-    _inputBuffer.setData(inputData, memSize);
+    _inputBuffer.setData(inputData, bufferSize);
 
     _shader.setBuffer('inp', _inputBuffer);
     _shader.setBuffer('out', _outputBuffer);
@@ -78,7 +77,7 @@ fn main(
     _shader.dispatch('main', workgroups, 1, 1);
 
     final outputData = Float32List(bufferSize);
-    _outputBuffer.readSync(outputData, bufferSize);
+    await _outputBuffer.readSync(outputData, bufferSize);
 
     setState(() {
       _result =

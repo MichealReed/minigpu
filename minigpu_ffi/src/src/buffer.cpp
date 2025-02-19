@@ -60,8 +60,27 @@ namespace mgpu
 
     void Buffer::readSync(void *outputData, size_t size)
     {
+        // Log entry into readSync along with the pointer and size.
+        LOG(kDefLog, kInfo, "Entering Buffer::readSync, outputData: %p, size: %zu", outputData, size);
+
         gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
+
+        // Perform the copy from GPU to CPU.
         gpu::toCPU(this->mgpu.getContext(), tensor, outputData, size);
+
+        // Cast outputData to a float pointer to log some values.
+        float *data = reinterpret_cast<float *>(outputData);
+        size_t numFloats = size / sizeof(float);
+        if (numFloats > 0)
+        {
+            LOG(kDefLog, kInfo, "readSync: First float: %f, Last float: %f", data[0], data[numFloats - 1]);
+        }
+        else
+        {
+            LOG(kDefLog, kInfo, "readSync: Not enough data to display float values");
+        }
+
+        LOG(kDefLog, kInfo, "Exiting Buffer::readSync");
     }
 
     void Buffer::readAsync(void *outputData, size_t size,
@@ -151,7 +170,6 @@ namespace mgpu
 
     void Buffer::setData(const float *inputData, size_t size)
     {
-        setLogLevel(0);
         // Check if we need to create or resize the buffer
         if (bufferData.buffer == nullptr || size > bufferData.size)
         {

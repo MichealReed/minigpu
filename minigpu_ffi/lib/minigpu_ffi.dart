@@ -122,7 +122,7 @@ final class FfiBuffer implements PlatformBuffer {
   }
 
   @override
-  void readSync(Float32List outputData, int size) {
+  Future<void> readSync(Float32List outputData, int size) {
     int elementCount = outputData.length;
     final outputPtr = malloc.allocate<Float>(elementCount * sizeOf<Float>());
     final outputTypedList = outputPtr.asTypedList(elementCount);
@@ -132,6 +132,7 @@ final class FfiBuffer implements PlatformBuffer {
 
     outputData.setAll(0, outputTypedList);
     malloc.free(outputPtr);
+    return Future.value();
   }
 
   @override

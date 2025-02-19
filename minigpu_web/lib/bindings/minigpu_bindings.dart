@@ -4,6 +4,7 @@ library minigpu_bindings;
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
+import 'package:js_interop_utils/js_interop_utils.dart';
 
 typedef MGPUBuffer = JSNumber;
 typedef MGPUComputeShader = JSNumber;
@@ -148,24 +149,33 @@ void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
   }
 }
 
-@JS('_ccall')
-external JSPromise _ccall(JSString name, JSString returnType,
-    JSArray<JSString> argTypes, JSArray args, JSObject opts);
+@JS('ccall')
+external JSPromise ccall(JSString name, JSString returnType, JSArray argTypes,
+    JSArray args, JSObject opts);
 
 // Buffer read functions
 @JS('_mgpuReadBufferSync')
 external void _mgpuReadBufferSync(
     MGPUBuffer buffer, JSNumber outputDataPtr, JSNumber size);
 
-void mgpuReadBufferSync(MGPUBuffer buffer, Float32List outputData, int size) {
-  final byteSize = size * Float32List.bytesPerElement;
+Future<void> mgpuReadBufferSync(
+    MGPUBuffer buffer, Float32List outputData, int size) async {
+  final byteSize = size * 4;
   final ptr = _malloc(byteSize.toJS);
   final startIndex = ptr.toDartInt ~/ 4;
   try {
-    _mgpuReadBufferSync(buffer, ptr, size.toJS);
+    await ccall(
+            "mgpuReadBufferSync".toJS,
+            "number".toJS,
+            ["number", "number", "number"].toJSDeep,
+            [buffer, ptr, size.toJS].toJSDeep,
+            {"async": true}.toJSDeep)
+        .toDart;
+    //_mgpuReadBufferSync(buffer, ptr, size.toJS);
     final output = _heapF32.sublist(startIndex, startIndex + size);
     outputData.setAll(0, output);
-    print(outputData);
+    print("first float: ${outputData[0]}");
+    print("last float: ${outputData[size - 1]}");
   } finally {
     //_free(ptr);
   }
