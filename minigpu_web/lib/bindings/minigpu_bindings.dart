@@ -107,21 +107,50 @@ void mgpuDestroyBuffer(MGPUBuffer buffer) {
 
 @JS('_mgpuSetBuffer')
 external void _mgpuSetBuffer(
-    MGPUComputeShader shader, JSString tag, MGPUBuffer buffer);
+    MGPUComputeShader shader, JSNumber tag, MGPUBuffer buffer);
 
 void mgpuSetBuffer(MGPUComputeShader shader, String tag, MGPUBuffer buffer) {
-  _mgpuSetBuffer(shader, tag.toJS, buffer);
+  final bytes = utf8.encode(tag);
+  final tagBytes = Uint8List(bytes.length + 1)
+    ..setRange(0, bytes.length, bytes)
+    ..[bytes.length] = 0; // null terminator
+
+  final allocSize = tagBytes.length * tagBytes.elementSizeInBytes;
+  final ptr = _malloc(allocSize.toJS);
+  try {
+    _heapU8.setAll(ptr.toDartInt, tagBytes);
+    _mgpuSetBuffer(shader, ptr, buffer);
+  } finally {
+    _free(ptr);
+  }
 }
 
 // Dispatch functions
 @JS('_mgpuDispatch')
-external void _mgpuDispatch(MGPUComputeShader shader, JSString kernel,
+external void _mgpuDispatch(MGPUComputeShader shader, JSNumber kernel,
     JSNumber groupsX, JSNumber groupsY, JSNumber groupsZ);
 
 void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
     int groupsY, int groupsZ) {
-  _mgpuDispatch(shader, kernel.toJS, groupsX.toJS, groupsY.toJS, groupsZ.toJS);
+  final bytes = utf8.encode(kernel);
+  final kernelBytes = Uint8List(bytes.length + 1)
+    ..setRange(0, bytes.length, bytes)
+    ..[bytes.length] = 0; // null terminator
+
+  final allocSize = kernelBytes.length * kernelBytes.elementSizeInBytes;
+  final ptr = _malloc(allocSize.toJS);
+
+  try {
+    _heapU8.setAll(ptr.toDartInt, kernelBytes);
+    _mgpuDispatch(shader, ptr, groupsX.toJS, groupsY.toJS, groupsZ.toJS);
+  } finally {
+    _free(ptr);
+  }
 }
+
+@JS('_ccall')
+external JSPromise _ccall(JSString name, JSString returnType,
+    JSArray<JSString> argTypes, JSArray args, JSObject opts);
 
 // Buffer read functions
 @JS('_mgpuReadBufferSync')
@@ -129,14 +158,16 @@ external void _mgpuReadBufferSync(
     MGPUBuffer buffer, JSNumber outputDataPtr, JSNumber size);
 
 void mgpuReadBufferSync(MGPUBuffer buffer, Float32List outputData, int size) {
-  final ptr = _malloc((size * Float32List.bytesPerElement).toJS);
+  final byteSize = size * Float32List.bytesPerElement;
+  final ptr = _malloc(byteSize.toJS);
+  final startIndex = ptr.toDartInt ~/ 4;
   try {
     _mgpuReadBufferSync(buffer, ptr, size.toJS);
-    final jsArray = JSFloat32Array(outputData.buffer.toJS);
-    _memcpy(outputData.offsetInBytes.toJS, ptr,
-        (size * Float32List.bytesPerElement).toJS);
+    final output = _heapF32.sublist(startIndex, startIndex + size);
+    outputData.setAll(0, output);
+    print(outputData);
   } finally {
-    _free(ptr);
+    //_free(ptr);
   }
 }
 
@@ -171,9 +202,12 @@ void mgpuSetBufferData(MGPUBuffer buffer, Float32List inputData, int size) {
   final byteSize = inputData.length * Float32List.bytesPerElement;
   final ptr = _malloc(byteSize.toJS);
 
+  final startIndex = ptr.toDartInt ~/ 4;
+  final endIndex = startIndex + inputData.length;
+
   try {
     // Copy inputData to HEAPF32 starting at the calculated index
-    _heapF32.setAll(ptr.toDartInt, inputData);
+    _heapF32.setRange(startIndex, endIndex, inputData);
 
     // Call the WASM function with the pointer
     _mgpuSetBufferData(buffer, ptr, size.toJS);

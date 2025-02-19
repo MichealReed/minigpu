@@ -51,6 +51,7 @@ if(EMSCRIPTEN)
     message(STATUS "toolchain dir ${EMSCRIPTEN_DIR}")
     # (Additional compile options could be added here)
     set_target_properties(${MAIN_LIB} PROPERTIES LINK_FLAGS "\
+        -O3 \
         -sUSE_WEBGPU=0 \
         -sWASM=1 \
         -DDAWN_EMSCRIPTEN_TOOLCHAIN=${EMSCRIPTEN_DIR} \
@@ -60,7 +61,7 @@ if(EMSCRIPTEN)
         -sALLOW_MEMORY_GROWTH \
         -sMAXIMUM_MEMORY=1gb \
         -sStackSize=16MB \
-        -sASYNCIFY \
+        -sASYNCIFY -ASYNCIFY_STACK_SIZE=1000000 -sASYNCIFY_IMPORTS=mgpuReadBufferSync \
         --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_enum_tables.js \
         --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_struct_info.js \
         --js-library=${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/library_webgpu_generated_sig_info.js \

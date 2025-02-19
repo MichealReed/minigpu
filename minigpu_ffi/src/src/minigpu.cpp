@@ -10,6 +10,7 @@ extern "C"
 
     void mgpuInitializeContext()
     {
+        setLogLevel(0);
         minigpu.initializeContext();
     }
 

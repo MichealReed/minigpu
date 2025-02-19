@@ -909,9 +909,9 @@ inline Context createContext(
     ctx.device = devData.device;
     ctx.deviceStatus = devData.status;
 
-    #ifndef __EMSCRIPTEN__
     // If the device was created, set up logging and fetch the queue
     if (devData.status == WGPURequestDeviceStatus_Success) {
+      #ifndef __EMSCRIPTEN__
       WGPULoggingCallbackInfo loggingCallbackInfo {
         .nextInChain = nullptr,
         .callback =
@@ -927,9 +927,9 @@ inline Context createContext(
         .userdata2 = nullptr
       };
       wgpuDeviceSetLoggingCallback(ctx.device, loggingCallbackInfo);
+      #endif
       ctx.queue = wgpuDeviceGetQueue(ctx.device);
     }
-    #endif
   }
 
   return std::move(ctx);
