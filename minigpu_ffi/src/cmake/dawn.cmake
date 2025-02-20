@@ -11,8 +11,12 @@ if(EMSCRIPTEN)
     set(DAWN_BUILD_DIR "${DAWN_DIR}/build_web" CACHE INTERNAL "")
 endif()
 
+include_directories(BEFORE PUBLIC "${DAWN_BUILD_DIR}/src/dawn/native/" 
+"${DAWN_BUILD_DIR}/src/dawn/native/Debug" "${DAWN_BUILD_DIR}/src/dawn/native/Release")
+
 # Enable find for no dawn rebuilds with flutter run
 set(ENABLE_DAWN_FIND OFF CACHE BOOL "Enable finding Dawn" FORCE)
+
 set(DAWN_BUILD_FOUND OFF CACHE BOOL "Dawn build found" FORCE)
 if(ENABLE_DAWN_FIND)
     # find_library, windows adds extra folder
