@@ -22,7 +22,7 @@ final class Minigpu {
   Future<void> init() async {
     if (isInit) throw MinigpuAlreadyInitError();
 
-    _platform.initializeContext();
+    await _platform.initializeContext();
     isInit = true;
   }
 
@@ -61,7 +61,8 @@ final class ComputeShader {
       _shader.setBuffer(tag, buffer._buffer);
 
   /// Dispatches the specified kernel with the given work group counts.
-  void dispatch(String kernel, int groupsX, int groupsY, int groupsZ) =>
+  Future<void> dispatch(
+          String kernel, int groupsX, int groupsY, int groupsZ) async =>
       _shader.dispatch(kernel, groupsX, groupsY, groupsZ);
 
   /// Destroys the compute shader.

@@ -29,12 +29,14 @@ external void _free(JSNumber ptr);
 @JS('_memcpy')
 external void _memcpy(JSNumber dest, JSAny src, JSNumber size);
 
-// Context functions
-@JS('_mgpuInitializeContext')
-external void _mgpuInitializeContext();
-
-void mgpuInitializeContext() {
-  _mgpuInitializeContext();
+Future<void> mgpuInitializeContext() async {
+  await ccall(
+    "mgpuInitializeContext".toJS,
+    "void".toJS,
+    <JSAny>[].toJSDeep,
+    <JSAny>[].toJSDeep,
+    {"async": true}.toJSDeep,
+  ).toDart;
 }
 
 @JS('_mgpuDestroyContext')
@@ -126,13 +128,8 @@ void mgpuSetBuffer(MGPUComputeShader shader, String tag, MGPUBuffer buffer) {
   }
 }
 
-// Dispatch functions
-@JS('_mgpuDispatch')
-external void _mgpuDispatch(MGPUComputeShader shader, JSNumber kernel,
-    JSNumber groupsX, JSNumber groupsY, JSNumber groupsZ);
-
-void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
-    int groupsY, int groupsZ) {
+Future<void> mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
+    int groupsY, int groupsZ) async {
   final bytes = utf8.encode(kernel);
   final kernelBytes = Uint8List(bytes.length + 1)
     ..setRange(0, bytes.length, bytes)
@@ -143,7 +140,13 @@ void mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
 
   try {
     _heapU8.setAll(ptr.toDartInt, kernelBytes);
-    _mgpuDispatch(shader, ptr, groupsX.toJS, groupsY.toJS, groupsZ.toJS);
+    await ccall(
+      "mgpuDispatch".toJS,
+      "void".toJS,
+      ["number", "number", "number", "number", "number"].toJSDeep,
+      [shader, ptr, groupsX.toJS, groupsY.toJS, groupsZ.toJS].toJSDeep,
+      {"async": true}.toJSDeep,
+    ).toDart;
   } finally {
     _free(ptr);
   }

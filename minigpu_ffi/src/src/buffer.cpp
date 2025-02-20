@@ -8,19 +8,18 @@ using namespace gpu;
 
 namespace mgpu
 {
-    void MGPU::initializeContext()
-    {
-        // Initialize the context using gpu::createContext
-        gpu::Context *rawContext = new gpu::Context(gpu::createContext());
-        if (rawContext)
-        {
-            ctx = std::unique_ptr<gpu::Context>(rawContext);
+    void MGPU::initializeContext() {
+        try {
+          // Instead of a synchronous createContext,
+          // wait for the asynchronous version.
+          gpu::Context ctxReady = gpu::waitForContext();
+          // Wrap it in a unique_ptr.
+          ctx = std::make_unique<gpu::Context>(std::move(ctxReady));
+          LOG(kDefLog, kInfo, "GPU context initialized successfully.");
+        } catch (const std::exception &ex) {
+          LOG(kDefLog, kError, "Failed to create GPU context: %s", ex.what());
         }
-        else
-        {
-            LOG(kDefLog, kError, "Failed to create GPU context");
-        }
-    }
+      }
 
     void MGPU::destroyContext()
     {
@@ -66,7 +65,8 @@ namespace mgpu
         gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
 
         // Perform the copy from GPU to CPU.
-        gpu::toCPU(this->mgpu.getContext(), tensor, outputData, size);
+       std::future<void> toCPUFuture = gpu::toCPU(this->mgpu.getContext(), tensor, outputData, bufferData.size);
+       waitForFuture(this->mgpu.getContext().instance, toCPUFuture);
 
         // Cast outputData to a float pointer to log some values.
         float *data = reinterpret_cast<float *>(outputData);
@@ -74,6 +74,17 @@ namespace mgpu
         if (numFloats > 0)
         {
             LOG(kDefLog, kInfo, "readSync: First float: %f, Last float: %f", data[0], data[numFloats - 1]);
+            // log all floats in single concatenated string
+            std::string floatString = "readSync: Floats: ";
+            for (size_t i = 0; i < numFloats; i++)
+            {
+                floatString += std::to_string(data[i]);
+                if (i < numFloats - 1)
+                {
+                    floatString += ", ";
+                }
+            }
+            LOG(kDefLog, kInfo, floatString.c_str());
         }
         else
         {
@@ -87,85 +98,85 @@ namespace mgpu
                            std::function<void(void *)> callback,
                            void *userData)
     {
-        // Create a tensor for the GPU buffer.
-        gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
-
-        // Prepare our copy data operation.
-        gpu::CopyData op;
-        op.future = op.promise.get_future();
-
-        // Create a readback buffer with CopyDst and MapRead usages.
-        {
-            WGPUBufferDescriptor readbackBufferDescriptor = {
-                .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead,
-                .size = size,
-            };
-            op.readbackBuffer = wgpuDeviceCreateBuffer(
-                this->mgpu.getContext().device, &readbackBufferDescriptor);
-        }
-
-        // Build a command buffer to copy from the source tensor buffer to the readback buffer.
-        {
-            WGPUCommandEncoder commandEncoder =
-                wgpuDeviceCreateCommandEncoder(this->mgpu.getContext().device, nullptr);
-            wgpuCommandEncoderCopyBufferToBuffer(commandEncoder,
-                                                 tensor.data.buffer, 0,
-                                                 op.readbackBuffer, 0, size);
-            op.commandBuffer = wgpuCommandEncoderFinish(commandEncoder, nullptr);
-            check(op.commandBuffer, "Create command buffer", __FILE__, __LINE__);
-        }
-
-        // Create a CallbackData instance which holds all state required by the callbacks.
-        gpu::CallbackData callbackData = {op.readbackBuffer, size, outputData,
-                                          &op.promise, &op.future};
-
-        // Submit the command buffer.
-        wgpuQueueSubmit(this->mgpu.getContext().queue, 1, &op.commandBuffer);
-
-        // Set up the work-done callback info.
-        WGPUQueueWorkDoneCallbackInfo workDoneCallbackInfo = {
-            .mode = WGPUCallbackMode_AllowSpontaneous,
-            .callback = [](WGPUQueueWorkDoneStatus status, void *userdata1, void *userdata2)
-            {
-                // Ensure that the submitted work completed successfully.
-                check(status == WGPUQueueWorkDoneStatus_Success, "Queue work done",
-                      __FILE__, __LINE__);
-                auto *data = static_cast<gpu::CallbackData *>(userdata1);
-
-                // Set up the buffer mapping callback info.
-                WGPUBufferMapCallbackInfo mapCallbackInfo = {
-                    .mode = WGPUCallbackMode_AllowSpontaneous,
-                    .callback = [](WGPUMapAsyncStatus status, WGPUStringView message,
-                                   void *userdata1, void *userdata2)
-                    {
-                        auto *data = static_cast<gpu::CallbackData *>(userdata1);
-                        check(status == WGPUMapAsyncStatus_Success, "Map readbackBuffer",
-                              __FILE__, __LINE__);
-                        const void *mappedData = wgpuBufferGetConstMappedRange(
-                            data->buffer, /*offset=*/0, data->bufferSize);
-                        check(mappedData, "Get mapped range", __FILE__, __LINE__);
-                        memcpy(data->output, mappedData, data->bufferSize);
-                        wgpuBufferUnmap(data->buffer);
-                        data->promise->set_value(); // Signal that the copy is done.
-                    },
-                    .userdata1 = data,
-                    .userdata2 = nullptr};
-
-                // Request the buffer to be mapped asynchronously.
-                wgpuBufferMapAsync(data->buffer, WGPUMapMode_Read, 0, data->bufferSize,
-                                   mapCallbackInfo);
-            },
-            .userdata1 = &callbackData,
-            .userdata2 = nullptr};
-
-        // Schedule the work-done callback.
-        wgpuQueueOnSubmittedWorkDone(this->mgpu.getContext().queue, workDoneCallbackInfo);
-
-        // Block until the asynchronous copy operation has completed.
-        gpu::wait(this->mgpu.getContext(), op.future);
-
-        // Finally, invoke the user callback.
-        callback(userData);
+        // // Create a tensor for the GPU buffer.
+        // gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
+        //
+        // // Prepare our copy data operation.
+        // gpu::CopyData op;
+        // op.future = op.promise.get_future();
+        //
+        // // Create a readback buffer with CopyDst and MapRead usages.
+        // {
+        //     WGPUBufferDescriptor readbackBufferDescriptor = {
+        //         .usage = WGPUBufferUsage_CopyDst | WGPUBufferUsage_MapRead,
+        //         .size = size,
+        //     };
+        //     op.readbackBuffer = wgpuDeviceCreateBuffer(
+        //         this->mgpu.getContext().device, &readbackBufferDescriptor);
+        // }
+        //
+        // // Build a command buffer to copy from the source tensor buffer to the readback buffer.
+        // {
+        //     WGPUCommandEncoder commandEncoder =
+        //         wgpuDeviceCreateCommandEncoder(this->mgpu.getContext().device, nullptr);
+        //     wgpuCommandEncoderCopyBufferToBuffer(commandEncoder,
+        //                                          tensor.data.buffer, 0,
+        //                                          op.readbackBuffer, 0, size);
+        //     op.commandBuffer = wgpuCommandEncoderFinish(commandEncoder, nullptr);
+        //     check(op.commandBuffer, "Create command buffer", __FILE__, __LINE__);
+        // }
+        //
+        // // Create a CallbackData instance which holds all state required by the callbacks.
+        // gpu::CallbackData callbackData = {op.readbackBuffer, size, outputData,
+        //                                   op.promise, &op.future};
+        //
+        // // Submit the command buffer.
+        // wgpuQueueSubmit(this->mgpu.getContext().queue, 1, &op.commandBuffer);
+        //
+        // // Set up the work-done callback info.
+        // WGPUQueueWorkDoneCallbackInfo workDoneCallbackInfo = {
+        //     .mode = WGPUCallbackMode_AllowSpontaneous,
+        //     .callback = [](WGPUQueueWorkDoneStatus status, void *userdata1, void *userdata2)
+        //     {
+        //         // Ensure that the submitted work completed successfully.
+        //         check(status == WGPUQueueWorkDoneStatus_Success, "Queue work done",
+        //               __FILE__, __LINE__);
+        //         auto *data = static_cast<gpu::CallbackData *>(userdata1);
+        //
+        //         // Set up the buffer mapping callback info.
+        //         WGPUBufferMapCallbackInfo mapCallbackInfo = {
+        //             .mode = WGPUCallbackMode_AllowSpontaneous,
+        //             .callback = [](WGPUMapAsyncStatus status, WGPUStringView message,
+        //                            void *userdata1, void *userdata2)
+        //             {
+        //                 auto *data = static_cast<gpu::CallbackData *>(userdata1);
+        //                 check(status == WGPUMapAsyncStatus_Success, "Map readbackBuffer",
+        //                       __FILE__, __LINE__);
+        //                 const void *mappedData = wgpuBufferGetConstMappedRange(
+        //                     data->buffer, /*offset=*/0, data->bufferSize);
+        //                 check(mappedData, "Get mapped range", __FILE__, __LINE__);
+        //                 memcpy(data->output, mappedData, data->bufferSize);
+        //                 wgpuBufferUnmap(data->buffer);
+        //                 data->promise->set_value(); // Signal that the copy is done.
+        //             },
+        //             .userdata1 = data,
+        //             .userdata2 = nullptr};
+        //
+        //         // Request the buffer to be mapped asynchronously.
+        //         wgpuBufferMapAsync(data->buffer, WGPUMapMode_Read, 0, data->bufferSize,
+        //                            mapCallbackInfo);
+        //     },
+        //     .userdata1 = &callbackData,
+        //     .userdata2 = nullptr};
+        //
+        // // Schedule the work-done callback.
+        // wgpuQueueOnSubmittedWorkDone(this->mgpu.getContext().queue, workDoneCallbackInfo);
+        //
+        // // Block until the asynchronous copy operation has completed.
+        // gpu::wait(this->mgpu.getContext(), op.future);
+        //
+        // // Finally, invoke the user callback.
+        // callback(userData);
     }
 
     void Buffer::setData(const float *inputData, size_t size)
@@ -177,6 +188,17 @@ namespace mgpu
         }
 
         LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer: %p, size: %zu", (void *)bufferData.buffer, size);
+        // log elements of buffer as single concatenated string
+        std::string bufferString = "mgpuSetBufferData: Buffer: ";
+        for (size_t i = 0; i < size / sizeof(float); i++)
+        {
+            bufferString += std::to_string(inputData[i]);
+            if (i < size / sizeof(float) - 1)
+            {
+                bufferString += ", ";
+            }
+        }
+        LOG(kDefLog, kInfo, bufferString.c_str());
 
         // Copy the input data to the buffer using gpu::toGPU
         gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, size);

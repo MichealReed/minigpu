@@ -32,7 +32,7 @@ class MinigpuFfi extends MinigpuPlatform {
   static void registerWith() => MinigpuPlatform.instance = MinigpuFfi._();
 
   @override
-  void initializeContext() {
+  Future<void> initializeContext() async {
     _bindings.mgpuInitializeContext();
   }
 
@@ -89,7 +89,8 @@ final class FfiComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void dispatch(String kernel, int groupsX, int groupsY, int groupsZ) {
+  Future<void> dispatch(
+      String kernel, int groupsX, int groupsY, int groupsZ) async {
     final kernelPtr = kernel.toNativeUtf8();
     try {
       _bindings.mgpuDispatch(

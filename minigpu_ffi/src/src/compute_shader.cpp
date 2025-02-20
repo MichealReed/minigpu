@@ -45,7 +45,6 @@ namespace mgpu
         if (buffer.bufferData.buffer != nullptr && buffer.bufferData.size > 0)
         {
             numElements = buffer.bufferData.size / sizeof(float);
-            
         }
         Shape shape{numElements};
 
@@ -54,28 +53,41 @@ namespace mgpu
             .shape = shape};
     }
 
-    void ComputeShader::dispatch(const std::string &kernelSource, int groupsX, int groupsY, int groupsZ)
+    void ComputeShader::dispatch(const std::string &kernelSource,
+                                 int groupsX, int groupsY, int groupsZ)
     {
+        // Check that the required buffers have been set.
         if (!bindings[0].data.buffer || !bindings[1].data.buffer)
         {
             throw std::runtime_error("Input and output buffers must be set before dispatch");
         }
 
+        
+        // Build the bind group for our two buffers.
         Bindings<2> gpu_bindings{{bindings[0], bindings[1]}};
+        LOG(kDefLog, kInfo, "bindings created");
 
-        Kernel op = createKernel(
+        
+        // Now createKernel returns a std::future<Kernel> (using our async design).
+        std::future<Kernel> kernelFuture = createKernel(
             mgpu.getContext(),
             code,
             gpu_bindings,
             {static_cast<size_t>(groupsX),
              static_cast<size_t>(groupsY),
-             static_cast<size_t>(groupsZ)});
+             static_cast<size_t>(groupsZ)}
+            // (Any parameters, compilation info, cache key as needed.)
+        );
+        LOG(kDefLog, kInfo, "created kernel");
+        // Wait for the kernel to be created (or ideally, chain asynchronously).
+        Kernel op = waitForFuture(mgpu.getContext().instance, kernelFuture);
+        LOG(kDefLog, kInfo, "kernel created2");
+        LOG(kDefLog, kInfo, "get kernel");
 
-        std::promise<void> promise;
-        auto future = promise.get_future();
-
-        dispatchKernel(mgpu.getContext(), op, promise);
-        wait(mgpu.getContext(), future);
+        // Our refactored dispatchKernel now also returns a std::future<void>.
+        std::future<void> dispatchFuture = dispatchKernel(mgpu.getContext(), op);
+        LOG(kDefLog, kInfo, "dispatched kernel");
+        waitForFuture(mgpu.getContext().instance, dispatchFuture);
     }
 
 } // namespace mgpu

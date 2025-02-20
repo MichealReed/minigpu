@@ -9,8 +9,8 @@ class MinigpuWeb extends MinigpuPlatform {
       MinigpuPlatform.instance = MinigpuWeb._();
 
   @override
-  void initializeContext() {
-    wasm.mgpuInitializeContext();
+  Future<void> initializeContext() async {
+    await wasm.mgpuInitializeContext();
   }
 
   @override
@@ -53,8 +53,9 @@ class WebComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void dispatch(String kernel, int groupsX, int groupsY, int groupsZ) {
-    wasm.mgpuDispatch(_shader, kernel, groupsX, groupsY, groupsZ);
+  Future<void> dispatch(
+      String kernel, int groupsX, int groupsY, int groupsZ) async {
+    await wasm.mgpuDispatch(_shader, kernel, groupsX, groupsY, groupsZ);
   }
 
   @override

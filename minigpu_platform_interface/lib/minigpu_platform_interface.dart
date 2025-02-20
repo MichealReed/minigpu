@@ -16,7 +16,7 @@ abstract class MinigpuPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  void initializeContext();
+  Future<void> initializeContext();
   void destroyContext();
   PlatformComputeShader createComputeShader();
   PlatformBuffer createBuffer(int size, int memSize);
@@ -26,12 +26,12 @@ abstract class PlatformComputeShader {
   void loadKernelString(String kernelString);
   bool hasKernel();
   void setBuffer(String tag, PlatformBuffer buffer);
-  void dispatch(String kernel, int groupsX, int groupsY, int groupsZ);
+  Future<void> dispatch(String kernel, int groupsX, int groupsY, int groupsZ);
   void destroy();
 }
 
 abstract class PlatformBuffer {
-  void readSync(Float32List outputData, int size);
+  Future<void> readSync(Float32List outputData, int size);
   void readAsync(Float32List outputData, int size,
       void Function(Float32List) callback, dynamic userData);
   void setData(Float32List inputData, int size);
