@@ -12,12 +12,12 @@ namespace mgpu
         void loadKernelString(const std::string &kernelString);
         void loadKernelFile(const std::string &path);
         bool hasKernel() const;
-        void setBuffer(const std::string &tag, const Buffer &buffer);
-        void dispatch(const std::string &kernel, int groupsX, int groupsY, int groupsZ);
+        void setBuffer(int tag, const Buffer &buffer);
+        void dispatch(int groupsX, int groupsY, int groupsZ);
 
     private:
         gpu::KernelCode code;
-        gpu::Tensor bindings[2];
+        std::vector<gpu::Tensor> bindings;
         MGPU &mgpu;
     };
 }

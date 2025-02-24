@@ -7,7 +7,7 @@
 #  include <emscripten.h>
 #  define EXPORT EMSCRIPTEN_KEEPALIVE
 #else
-#  define EXPORT
+#  define EXPORT __attribute__((visibility("default"))) __attribute__((used))
 #endif
 
 #endif

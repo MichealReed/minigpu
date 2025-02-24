@@ -78,26 +78,17 @@ final class FfiComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void setBuffer(String tag, PlatformBuffer buffer) {
-    final tagPtr = tag.toNativeUtf8();
+  void setBuffer(int tag, PlatformBuffer buffer) {
     try {
-      _bindings.mgpuSetBuffer(
-          _self, tagPtr.cast(), (buffer as FfiBuffer)._self);
-    } finally {
-      malloc.free(tagPtr);
-    }
+      _bindings.mgpuSetBuffer(_self, tag, (buffer as FfiBuffer)._self);
+    } finally {}
   }
 
   @override
-  Future<void> dispatch(
-      String kernel, int groupsX, int groupsY, int groupsZ) async {
-    final kernelPtr = kernel.toNativeUtf8();
+  Future<void> dispatch(int groupsX, int groupsY, int groupsZ) async {
     try {
-      _bindings.mgpuDispatch(
-          _self, kernelPtr.cast(), groupsX, groupsY, groupsZ);
-    } finally {
-      malloc.free(kernelPtr);
-    }
+      _bindings.mgpuDispatch(_self, groupsX, groupsY, groupsZ);
+    } finally {}
   }
 
   @override

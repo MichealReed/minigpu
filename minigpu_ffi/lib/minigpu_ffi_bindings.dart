@@ -135,7 +135,7 @@ class minigpuFfiBindings {
 
   void mgpuSetBuffer(
     ffi.Pointer<MGPUComputeShader> shader,
-    ffi.Pointer<ffi.Char> tag,
+    int tag,
     ffi.Pointer<MGPUBuffer> buffer,
   ) {
     return _mgpuSetBuffer(
@@ -147,24 +147,20 @@ class minigpuFfiBindings {
 
   late final _mgpuSetBufferPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<MGPUComputeShader>,
-              ffi.Pointer<ffi.Char>,
+          ffi.Void Function(ffi.Pointer<MGPUComputeShader>, ffi.Int,
               ffi.Pointer<MGPUBuffer>)>>('mgpuSetBuffer');
   late final _mgpuSetBuffer = _mgpuSetBufferPtr.asFunction<
-      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>,
-          ffi.Pointer<MGPUBuffer>)>();
+      void Function(
+          ffi.Pointer<MGPUComputeShader>, int, ffi.Pointer<MGPUBuffer>)>();
 
   void mgpuDispatch(
     ffi.Pointer<MGPUComputeShader> shader,
-    ffi.Pointer<ffi.Char> kernel,
     int groupsX,
     int groupsY,
     int groupsZ,
   ) {
     return _mgpuDispatch(
       shader,
-      kernel,
       groupsX,
       groupsY,
       groupsZ,
@@ -173,15 +169,10 @@ class minigpuFfiBindings {
 
   late final _mgpuDispatchPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(
-              ffi.Pointer<MGPUComputeShader>,
-              ffi.Pointer<ffi.Char>,
-              ffi.Int,
-              ffi.Int,
+          ffi.Void Function(ffi.Pointer<MGPUComputeShader>, ffi.Int, ffi.Int,
               ffi.Int)>>('mgpuDispatch');
   late final _mgpuDispatch = _mgpuDispatchPtr.asFunction<
-      void Function(ffi.Pointer<MGPUComputeShader>, ffi.Pointer<ffi.Char>, int,
-          int, int)>();
+      void Function(ffi.Pointer<MGPUComputeShader>, int, int, int)>();
 
   void mgpuReadBufferSync(
     ffi.Pointer<MGPUBuffer> buffer,

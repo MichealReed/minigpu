@@ -25,8 +25,8 @@ abstract class MinigpuPlatform extends PlatformInterface {
 abstract class PlatformComputeShader {
   void loadKernelString(String kernelString);
   bool hasKernel();
-  void setBuffer(String tag, PlatformBuffer buffer);
-  Future<void> dispatch(String kernel, int groupsX, int groupsY, int groupsZ);
+  void setBuffer(int tag, PlatformBuffer buffer);
+  Future<void> dispatch(int groupsX, int groupsY, int groupsZ);
   void destroy();
 }
 

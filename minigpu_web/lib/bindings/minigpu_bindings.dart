@@ -112,54 +112,28 @@ void mgpuDestroyBuffer(MGPUBuffer buffer) {
 external void _mgpuSetBuffer(
     MGPUComputeShader shader, JSNumber tag, MGPUBuffer buffer);
 
-void mgpuSetBuffer(MGPUComputeShader shader, String tag, MGPUBuffer buffer) {
-  final bytes = utf8.encode(tag);
-  final tagBytes = Uint8List(bytes.length + 1)
-    ..setRange(0, bytes.length, bytes)
-    ..[bytes.length] = 0; // null terminator
-
-  final allocSize = tagBytes.length * tagBytes.elementSizeInBytes;
-  final ptr = _malloc(allocSize.toJS);
+void mgpuSetBuffer(MGPUComputeShader shader, int tag, MGPUBuffer buffer) {
   try {
-    _heapU8.setAll(ptr.toDartInt, tagBytes);
-    _mgpuSetBuffer(shader, ptr, buffer);
-  } finally {
-    _free(ptr);
-  }
+    _mgpuSetBuffer(shader, tag.toJS, buffer);
+  } finally {}
 }
 
-Future<void> mgpuDispatch(MGPUComputeShader shader, String kernel, int groupsX,
-    int groupsY, int groupsZ) async {
-  final bytes = utf8.encode(kernel);
-  final kernelBytes = Uint8List(bytes.length + 1)
-    ..setRange(0, bytes.length, bytes)
-    ..[bytes.length] = 0; // null terminator
-
-  final allocSize = kernelBytes.length * kernelBytes.elementSizeInBytes;
-  final ptr = _malloc(allocSize.toJS);
-
+Future<void> mgpuDispatch(
+    MGPUComputeShader shader, int groupsX, int groupsY, int groupsZ) async {
   try {
-    _heapU8.setAll(ptr.toDartInt, kernelBytes);
     await ccall(
       "mgpuDispatch".toJS,
       "void".toJS,
       ["number", "number", "number", "number", "number"].toJSDeep,
-      [shader, ptr, groupsX.toJS, groupsY.toJS, groupsZ.toJS].toJSDeep,
+      [shader, groupsX.toJS, groupsY.toJS, groupsZ.toJS].toJSDeep,
       {"async": true}.toJSDeep,
     ).toDart;
-  } finally {
-    _free(ptr);
-  }
+  } finally {}
 }
 
 @JS('ccall')
 external JSPromise ccall(JSString name, JSString returnType, JSArray argTypes,
     JSArray args, JSObject opts);
-
-// Buffer read functions
-@JS('_mgpuReadBufferSync')
-external void _mgpuReadBufferSync(
-    MGPUBuffer buffer, JSNumber outputDataPtr, JSNumber size);
 
 Future<void> mgpuReadBufferSync(
     MGPUBuffer buffer, Float32List outputData, int size) async {

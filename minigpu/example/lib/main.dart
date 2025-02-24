@@ -74,7 +74,7 @@ fn main(
     _shader.setBuffer('out', _outputBuffer);
 
     final workgroups = ((bufferSize + 255) / 256).floor();
-    await _shader.dispatch('main', workgroups, 1, 1);
+    await _shader.dispatch(workgroups, 1, 1);
 
     final outputData = Float32List(bufferSize);
     await _outputBuffer.readSync(outputData, bufferSize);

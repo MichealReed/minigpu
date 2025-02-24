@@ -85,23 +85,23 @@ extern "C"
         }
     }
 
-    void mgpuSetBuffer(MGPUComputeShader *shader, const char *tag, MGPUBuffer *buffer)
+    void mgpuSetBuffer(MGPUComputeShader *shader, int tag, MGPUBuffer *buffer)
     {
-        if (shader && tag && buffer)
+        if (shader && tag >= 0 && buffer)
         {
             reinterpret_cast<mgpu::ComputeShader *>(shader)->setBuffer(tag, *reinterpret_cast<mgpu::Buffer *>(buffer));
         }
         else
         {
-            LOG(kDefLog, kError, "Invalid shader, kernel, tag, or buffer pointer");
+            LOG(kDefLog, kError, "Invalid shader, or buffer pointer");
         }
     }
 
-    void mgpuDispatch(MGPUComputeShader *shader, const char *kernel, int groupsX, int groupsY, int groupsZ)
+    void mgpuDispatch(MGPUComputeShader *shader, int groupsX, int groupsY, int groupsZ)
     {
-        if (shader && kernel)
+        if (shader)
         {
-            reinterpret_cast<mgpu::ComputeShader *>(shader)->dispatch(kernel, groupsX, groupsY, groupsZ);
+            reinterpret_cast<mgpu::ComputeShader *>(shader)->dispatch( groupsX, groupsY, groupsZ);
         }
         else
         {

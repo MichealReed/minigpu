@@ -4,90 +4,55 @@
 
 using namespace gpu;
 
-namespace mgpu
-{
+namespace mgpu {
 
-    ComputeShader::ComputeShader(MGPU &mgpu) : mgpu(mgpu) {}
+ComputeShader::ComputeShader(MGPU &mgpu) : mgpu(mgpu) {}
 
-    void ComputeShader::loadKernelString(const std::string &kernelString)
-    {
-        code = KernelCode{
-            kernelString,
-            Shape{256, 1, 1},
-            kf32};
-    }
+void ComputeShader::loadKernelString(const std::string &kernelString) {
+  code = KernelCode{kernelString, Shape{256, 1, 1}, kf32};
+}
 
-    void ComputeShader::loadKernelFile(const std::string &path)
-    {
-        std::ifstream file(path);
-        if (!file.is_open())
-        {
-            throw std::runtime_error("Failed to open kernel file: " + path);
-        }
-        std::string kernelString((std::istreambuf_iterator<char>(file)),
-                                 std::istreambuf_iterator<char>());
-        loadKernelString(kernelString);
-    }
+void ComputeShader::loadKernelFile(const std::string &path) {
+  std::ifstream file(path);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed to open kernel file: " + path);
+  }
+  std::string kernelString((std::istreambuf_iterator<char>(file)),
+                           std::istreambuf_iterator<char>());
+  loadKernelString(kernelString);
+}
 
-    bool ComputeShader::hasKernel() const
-    {
-        return !code.data.empty();
-    }
+bool ComputeShader::hasKernel() const { return !code.data.empty(); }
 
-    void ComputeShader::setBuffer(const std::string &tag, const Buffer &buffer)
-    {
-        size_t bindingIndex = (tag == "inp") ? 0 : (tag == "out") ? 1
-                                                                  : throw std::runtime_error("Invalid buffer tag");
+void ComputeShader::setBuffer(int tag, const Buffer &buffer) {
 
-        // For the input buffer, we assume it's already been created properly.
-        // For output, if buffer.bufferData.size is zero, we use a fallback value.
-        size_t numElements = 0;
-        if (buffer.bufferData.buffer != nullptr && buffer.bufferData.size > 0)
-        {
-            numElements = buffer.bufferData.size / sizeof(float);
-        }
-        Shape shape{numElements};
+  if (tag >= static_cast<int>(bindings.size())) {
+    bindings.resize(tag + 1);
+  }
 
-        bindings[bindingIndex] = Tensor{
-            .data = buffer.bufferData,
-            .shape = shape};
-    }
+  // For the input buffer, we assume it's already been created properly.
+  // For output, if buffer.bufferData.size is zero, we use a fallback value.
+  size_t numElements = 0;
+  if (buffer.bufferData.buffer != nullptr && buffer.bufferData.size > 0) {
+    numElements = buffer.bufferData.size / sizeof(float);
+  }
+  Shape shape{numElements};
 
-    void ComputeShader::dispatch(const std::string &kernelSource,
-                                 int groupsX, int groupsY, int groupsZ)
-    {
-        // Check that the required buffers have been set.
-        if (!bindings[0].data.buffer || !bindings[1].data.buffer)
-        {
-            throw std::runtime_error("Input and output buffers must be set before dispatch");
-        }
+  bindings[tag] = Tensor{.data = buffer.bufferData, .shape = shape};
+}
 
-        
-        // Build the bind group for our two buffers.
-        Bindings<2> gpu_bindings{{bindings[0], bindings[1]}};
-        LOG(kDefLog, kInfo, "bindings created");
+void ComputeShader::dispatch(int groupsX, int groupsY, int groupsZ) {
 
-        
-        // Now createKernel returns a std::future<Kernel> (using our async design).
-        std::future<Kernel> kernelFuture = createKernel(
-            mgpu.getContext(),
-            code,
-            gpu_bindings,
-            {static_cast<size_t>(groupsX),
-             static_cast<size_t>(groupsY),
-             static_cast<size_t>(groupsZ)}
-            // (Any parameters, compilation info, cache key as needed.)
-        );
-        LOG(kDefLog, kInfo, "created kernel");
-        // Wait for the kernel to be created (or ideally, chain asynchronously).
-        Kernel op = waitForFuture(mgpu.getContext().instance, kernelFuture);
-        LOG(kDefLog, kInfo, "kernel created2");
-        LOG(kDefLog, kInfo, "get kernel");
+  // create array of view offsets for tensor, size_t all 0
+  std::vector<size_t> viewOffsets(bindings.size(), 0);
 
-        // Our refactored dispatchKernel now also returns a std::future<void>.
-        std::future<void> dispatchFuture = dispatchKernel(mgpu.getContext(), op);
-        LOG(kDefLog, kInfo, "dispatched kernel");
-        waitForFuture(mgpu.getContext().instance, dispatchFuture);
-    }
+  Kernel kernel =
+      createKernel(mgpu.getContext(), code, bindings.data(), bindings.size(),
+                   viewOffsets.data(),
+                   {static_cast<size_t>(groupsX), static_cast<size_t>(groupsY),
+                    static_cast<size_t>(groupsZ)});
+
+  dispatchKernel(mgpu.getContext(), kernel);
+}
 
 } // namespace mgpu

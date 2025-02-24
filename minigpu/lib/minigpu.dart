@@ -48,6 +48,7 @@ final class ComputeShader {
   ComputeShader._(PlatformComputeShader shader) : _shader = shader;
 
   final PlatformComputeShader _shader;
+  Map<String, int> _kernelTags = {};
 
   /// Loads a kernel string into the shader.
   void loadKernelString(String kernelString) =>
@@ -57,13 +58,18 @@ final class ComputeShader {
   bool hasKernel() => _shader.hasKernel();
 
   /// Sets a buffer for the specified kernel and tag.
-  void setBuffer(String tag, Buffer buffer) =>
-      _shader.setBuffer(tag, buffer._buffer);
+  void setBuffer(String tag, Buffer buffer) {
+    if (!_kernelTags.containsKey(tag)) {
+      _kernelTags[tag] = _kernelTags.length;
+    } else {
+      throw Exception('Tag $tag already exists');
+    }
+    _shader.setBuffer(_kernelTags[tag]!, buffer._buffer);
+  }
 
   /// Dispatches the specified kernel with the given work group counts.
-  Future<void> dispatch(
-          String kernel, int groupsX, int groupsY, int groupsZ) async =>
-      _shader.dispatch(kernel, groupsX, groupsY, groupsZ);
+  Future<void> dispatch(int groupsX, int groupsY, int groupsZ) async =>
+      _shader.dispatch(groupsX, groupsY, groupsZ);
 
   /// Destroys the compute shader.
   void destroy() => _shader.destroy();

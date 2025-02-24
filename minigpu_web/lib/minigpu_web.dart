@@ -47,15 +47,14 @@ class WebComputeShader implements PlatformComputeShader {
   }
 
   @override
-  void setBuffer(String tag, PlatformBuffer buffer) {
+  void setBuffer(int tag, PlatformBuffer buffer) {
     // Updated: Pass the shader pointer as first argument
     wasm.mgpuSetBuffer(_shader, tag, (buffer as WebBuffer)._buffer);
   }
 
   @override
-  Future<void> dispatch(
-      String kernel, int groupsX, int groupsY, int groupsZ) async {
-    await wasm.mgpuDispatch(_shader, kernel, groupsX, groupsY, groupsZ);
+  Future<void> dispatch(int groupsX, int groupsY, int groupsZ) async {
+    await wasm.mgpuDispatch(_shader, groupsX, groupsY, groupsZ);
   }
 
   @override
