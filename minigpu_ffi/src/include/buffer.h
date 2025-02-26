@@ -26,7 +26,7 @@ namespace mgpu
     public:
         Buffer(MGPU &mgpu);
         void createBuffer(int size, int memSize);
-        void readSync(void *outputData, size_t size);
+        void readSync(void *outputData, size_t size, size_t offset = 0);
         // NOT IMPLEMENTED
         void readAsync(void *outputData, size_t size, std::function<void(void *)> callback, void *userData);
         void setData(const float *inputData, size_t size);

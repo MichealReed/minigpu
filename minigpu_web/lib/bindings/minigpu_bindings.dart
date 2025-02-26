@@ -26,9 +26,6 @@ external JSNumber _malloc(JSNumber size);
 @JS('_free')
 external void _free(JSNumber ptr);
 
-@JS('_memcpy')
-external void _memcpy(JSNumber dest, JSAny src, JSNumber size);
-
 Future<void> mgpuInitializeContext() async {
   await ccall(
     "mgpuInitializeContext".toJS,
@@ -136,49 +133,44 @@ external JSPromise ccall(JSString name, JSString returnType, JSArray argTypes,
     JSArray args, JSObject opts);
 
 Future<void> mgpuReadBufferSync(
-    MGPUBuffer buffer, Float32List outputData, int size) async {
-  final byteSize = size * 4;
-  final ptr = _malloc(byteSize.toJS);
-  final startIndex = ptr.toDartInt ~/ 4;
+  MGPUBuffer buffer,
+  Float32List outputData, {
+  int readElements = 0,
+  int elementOffset = 0,
+  int readBytes = 0,
+  int byteOffset = 0,
+}) async {
+  // Determine the number of elements to read.
+  final int sizeToRead = (readElements > 0)
+      ? readElements * Float32List.bytesPerElement
+      : (readBytes > 0
+          ? readBytes
+          : (outputData.length - elementOffset) * Float32List.bytesPerElement);
+
+  // If readElements is provided, calculate the effective byte offset based on element count.
+  final int effectiveByteOffset = (readElements > 0)
+      ? elementOffset * Float32List.bytesPerElement
+      : byteOffset;
+
+  final JSNumber ptr = _malloc(sizeToRead.toJS);
+  final int startIndex = ptr.toDartInt ~/ Float32List.bytesPerElement;
+
   try {
     await ccall(
-            "mgpuReadBufferSync".toJS,
-            "number".toJS,
-            ["number", "number", "number"].toJSDeep,
-            [buffer, ptr, size.toJS].toJSDeep,
-            {"async": true}.toJSDeep)
-        .toDart;
-    //_mgpuReadBufferSync(buffer, ptr, size.toJS);
-    final output = _heapF32.sublist(startIndex, startIndex + size);
-    outputData.setAll(0, output);
-    print("first float: ${outputData[0]}");
-    print("last float: ${outputData[size - 1]}");
+      "mgpuReadBufferSync".toJS,
+      "number".toJS,
+      ["number", "number", "number", "number"].toJSDeep,
+      [buffer, ptr, sizeToRead.toJS, effectiveByteOffset.toJS].toJSDeep,
+      {"async": true}.toJSDeep,
+    ).toDart;
+
+    final output = _heapF32.sublist(startIndex, startIndex + sizeToRead);
+    outputData.setAll(elementOffset, output);
+    print("first float: ${outputData[elementOffset]}");
+    print("last float: ${outputData[elementOffset + sizeToRead - 1]}");
   } finally {
-    //_free(ptr);
+    _free(ptr);
   }
-}
-
-typedef ReadBufferAsyncCallbackFunc = void Function(Float32List);
-
-@JS('_mgpuReadBufferAsync')
-external void _mgpuReadBufferAsync(MGPUBuffer buffer, JSNumber outputDataPtr,
-    JSNumber size, JSFunction callback, JSAny userData);
-
-void mgpuReadBufferAsync(MGPUBuffer buffer, Float32List outputData, int size,
-    ReadBufferAsyncCallbackFunc callback) {
-  final ptr = _malloc((size * Float32List.bytesPerElement).toJS);
-  _mgpuReadBufferAsync(
-      buffer,
-      ptr,
-      size.toJS,
-      ((JSAny _) {
-        final jsArray = JSFloat32Array(outputData.buffer.toJS);
-        _memcpy(outputData.offsetInBytes.toJS, ptr,
-            (size * Float32List.bytesPerElement).toJS);
-        callback(outputData);
-        _free(ptr);
-      }).toJS,
-      null.jsify()!);
 }
 
 @JS('_mgpuSetBufferData')

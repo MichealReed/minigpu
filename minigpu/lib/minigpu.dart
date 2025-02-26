@@ -82,13 +82,9 @@ final class Buffer {
   final PlatformBuffer _buffer;
 
   /// Reads data from the buffer synchronously.
-  Future<void> readSync(Float32List outputData, int size) async =>
-      _buffer.readSync(outputData, size);
-
-  /// Reads data from the buffer asynchronously.
-  void readAsync(Float32List outputData, int size,
-          void Function(Float32List) callback, dynamic userData) =>
-      _buffer.readAsync(outputData, size, callback, userData);
+  Future<void> read(Float32List outputData, int size,
+          {int readOffset = 0}) async =>
+      _buffer.read(outputData, size, elementOffset: readOffset);
 
   /// Writes data to the buffer.
   void setData(Float32List inputData, int size) =>

@@ -31,13 +31,13 @@ abstract class PlatformComputeShader {
 }
 
 abstract class PlatformBuffer {
-  Future<void> readSync(Float32List outputData, int size);
-  void readAsync(Float32List outputData, int size,
-      void Function(Float32List) callback, dynamic userData);
+  Future<void> read(Float32List outputData, int readElements,
+      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0});
   void setData(Float32List inputData, int size);
   void destroy();
 }
 
 final class MinigpuPlatformOutOfMemoryException implements Exception {
+  @override
   String toString() => 'Out of memory';
 }

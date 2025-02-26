@@ -77,7 +77,7 @@ fn main(
     await _shader.dispatch(workgroups, 1, 1);
 
     final outputData = Float32List(bufferSize);
-    await _outputBuffer.readSync(outputData, bufferSize);
+    await _outputBuffer.read(outputData, bufferSize);
 
     setState(() {
       _result =

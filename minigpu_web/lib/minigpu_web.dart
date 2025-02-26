@@ -69,15 +69,16 @@ class WebBuffer implements PlatformBuffer {
   WebBuffer(this._buffer);
 
   @override
-  Future<void> readSync(Float32List outputData, int size) async {
-    await wasm.mgpuReadBufferSync(_buffer, outputData, size);
-  }
-
-  @override
-  void readAsync(Float32List outputData, int size,
-      void Function(Float32List) callback, dynamic userData) {
-    // Updated to remove the unused userData parameter and use proper types.
-    wasm.mgpuReadBufferAsync(_buffer, outputData, size, callback);
+  Future<void> read(Float32List outputData, int readElements,
+      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
+    await wasm.mgpuReadBufferSync(
+      _buffer,
+      outputData,
+      readElements: readElements,
+      elementOffset: elementOffset,
+      readBytes: readBytes,
+      byteOffset: byteOffset,
+    );
   }
 
   @override

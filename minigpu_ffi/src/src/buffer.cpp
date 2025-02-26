@@ -53,7 +53,7 @@ namespace mgpu
         };
     }
 
-    void Buffer::readSync(void *outputData, size_t size)
+    void Buffer::readSync(void *outputData, size_t size, size_t offset)
     {
         // Log entry into readSync along with the pointer and size.
         LOG(kDefLog, kInfo, "Entering Buffer::readSync, outputData: %p, size: %zu", outputData, size);
@@ -61,7 +61,7 @@ namespace mgpu
         gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
 
         // Perform the copy from GPU to CPU.
-        gpu::toCPU(this->mgpu.getContext(), tensor, outputData, bufferData.size);
+        gpu::toCPU(this->mgpu.getContext(), tensor, outputData, bufferData.size, offset);
 
         // Cast outputData to a float pointer to log some values.
         float *data = reinterpret_cast<float *>(outputData);

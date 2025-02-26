@@ -109,30 +109,17 @@ extern "C"
         }
     }
 
-    void mgpuReadBufferSync(MGPUBuffer *buffer, float *outputData, size_t size)
+    void mgpuReadBufferSync(MGPUBuffer *buffer, float *outputData, size_t size, size_t offset)
     {
         if (buffer && outputData)
         {
-            reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(outputData, size);
+            reinterpret_cast<mgpu::Buffer *>(buffer)->readSync(outputData, size, offset ? offset : 0);
         }
         else
         {
             LOG(kDefLog, kError, "Invalid buffer or outputData pointer");
         }
     }
-
-    void mgpuReadBufferAsync(MGPUBuffer *buffer, void *outputData, size_t size, void (*callback)(void *), void *userData)
-    {
-        if (buffer && outputData && callback)
-        {
-            reinterpret_cast<mgpu::Buffer *>(buffer)->readAsync(outputData, size, callback, userData);
-        }
-        else
-        {
-            LOG(kDefLog, kError, "Invalid buffer, outputData, or callback pointer");
-        }
-    }
-
     void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData, size_t size)
     {
         printf("mgpuSetBufferData called\n");

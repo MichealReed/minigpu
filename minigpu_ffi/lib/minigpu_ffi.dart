@@ -103,42 +103,35 @@ final class FfiBuffer implements PlatformBuffer {
 
   final Pointer<ffi.MGPUBuffer> _self;
 
-  static final Map<int, Completer<void>> _completers = {};
-
-  static void _readAsyncCallback(Pointer<Void> userData) {
-    final callbackId = userData.address;
-    final completer = _completers.remove(callbackId);
-    if (completer != null) {
-      completer.complete();
-    }
-  }
-
   @override
-  Future<void> readSync(Float32List outputData, int size) {
-    int elementCount = outputData.length;
-    final outputPtr = malloc.allocate<Float>(elementCount * sizeOf<Float>());
-    final outputTypedList = outputPtr.asTypedList(elementCount);
+  Future<void> read(Float32List outputData, int readElements,
+      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
+    // Determine the number of elements to read.
+    final int totalElements = outputData.length;
+    final int sizeToRead = readElements != 0
+        ? readElements
+        : (readBytes != 0
+            ? readBytes ~/ sizeOf<Float>()
+            : totalElements - elementOffset);
 
+    // Calculate effective byte offset:
+    // If readElements is provided, we use elementOffset * sizeOf<Float>().
+    // Otherwise, we use the provided byteOffset.
+    final int effectiveByteOffset =
+        readElements != 0 ? elementOffset * sizeOf<Float>() : byteOffset;
+
+    final int byteSize = sizeToRead * sizeOf<Float>();
+    final Pointer<Float> outputPtr = malloc.allocate<Float>(byteSize);
+    final List<double> outputTypedList = outputPtr.asTypedList(sizeToRead);
+
+    // Pass byteSize and effective offset to the native binding.
     _bindings.mgpuReadBufferSync(
-        _self, outputPtr, elementCount * sizeOf<Float>());
+        _self, outputPtr, byteSize, effectiveByteOffset);
 
-    outputData.setAll(0, outputTypedList);
+    // Copy the read data into outputData starting at elementOffset.
+    outputData.setAll(elementOffset, outputTypedList);
     malloc.free(outputPtr);
     return Future.value();
-  }
-
-  @override
-  Future<void> readAsync(dynamic outputData, int size,
-      void Function(Float32List) callback, dynamic userData) {
-    final completer = Completer<void>();
-    final callbackId = identical(userData, null) ? 0 : userData.hashCode;
-    _completers[callbackId] = completer;
-    final callbackPtr =
-        Pointer.fromFunction<ReadAsyncCallbackFunc>(_readAsyncCallback);
-    final userDataPtr = Pointer<Void>.fromAddress(callbackId);
-    _bindings.mgpuReadBufferAsync(
-        _self, outputData, size, callbackPtr, userDataPtr);
-    return completer.future.then((_) => callback(outputData));
   }
 
   @override
