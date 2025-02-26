@@ -126,37 +126,6 @@ final class FfiBuffer implements PlatformBuffer {
 
   final Pointer<ffi.MGPUBuffer> _self;
 
-  // @override
-  // Future<void> read(Float32List outputData, int readElements,
-  //     {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
-  //   // Determine the number of elements to read.
-  //   final int totalElements = outputData.length;
-  //   final int sizeToRead = readElements != 0
-  //       ? readElements
-  //       : (readBytes != 0
-  //           ? readBytes ~/ sizeOf<Float>()
-  //           : totalElements - elementOffset);
-
-  //   // Calculate effective byte offset:
-  //   // If readElements is provided, we use elementOffset * sizeOf<Float>().
-  //   // Otherwise, we use the provided byteOffset.
-  //   final int effectiveByteOffset =
-  //       readElements != 0 ? elementOffset * sizeOf<Float>() : byteOffset;
-
-  //   final int byteSize = sizeToRead * sizeOf<Float>();
-  //   final Pointer<Float> outputPtr = malloc.allocate<Float>(byteSize);
-  //   final List<double> outputTypedList = outputPtr.asTypedList(sizeToRead);
-
-  //   // Pass byteSize and effective offset to the native binding.
-  //   _bindings.mgpuReadBufferSync(
-  //       _self, outputPtr, byteSize, effectiveByteOffset);
-
-  //   // Copy the read data into outputData starting at elementOffset.
-  //   outputData.setAll(elementOffset, outputTypedList);
-  //   malloc.free(outputPtr);
-  //   return Future.value();
-  // }
-
   @override
   Future<void> read(
     Float32List outputData,
