@@ -4,6 +4,6 @@
  - [x] Windows Desktop
  - [x] Linux Desktop
  - [ ] MacOS
- - [x] - Web
- - [ ] - Android
- - [ ] - iOS
+ - [x] Web
+ - [ ] Android
+ - [ ] iOS
