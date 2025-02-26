@@ -55,4 +55,11 @@ void ComputeShader::dispatch(int groupsX, int groupsY, int groupsZ) {
   dispatchKernel(mgpu.getContext(), kernel);
 }
 
+void ComputeShader::dispatchAsync(int groupsX, int groupsY, int groupsZ,
+                                  std::function<void()> callback) {
+  dispatch(groupsX, groupsY, groupsZ);
+  if (callback) {
+    callback();
+  }
+}
 } // namespace mgpu

@@ -33,7 +33,19 @@ class MinigpuFfi extends MinigpuPlatform {
 
   @override
   Future<void> initializeContext() async {
-    _bindings.mgpuInitializeContext();
+    final completer = Completer<void>();
+
+    void nativeCallback() {
+      completer.complete();
+    }
+
+    final nativeCallable =
+        NativeCallable<Void Function()>.listener(nativeCallback);
+
+    _bindings.mgpuInitializeContextAsync(nativeCallable.nativeFunction);
+
+    await completer.future;
+    nativeCallable.close();
   }
 
   @override
@@ -87,7 +99,18 @@ final class FfiComputeShader implements PlatformComputeShader {
   @override
   Future<void> dispatch(int groupsX, int groupsY, int groupsZ) async {
     try {
-      _bindings.mgpuDispatch(_self, groupsX, groupsY, groupsZ);
+      final completer = Completer<void>();
+
+      void nativeCallback() {
+        completer.complete();
+      }
+
+      final nativeCallable =
+          NativeCallable<Void Function()>.listener(nativeCallback);
+      _bindings.mgpuDispatchAsync(
+          _self, groupsX, groupsY, groupsZ, nativeCallable.nativeFunction);
+      await completer.future;
+      nativeCallable.close();
     } finally {}
   }
 
@@ -103,10 +126,46 @@ final class FfiBuffer implements PlatformBuffer {
 
   final Pointer<ffi.MGPUBuffer> _self;
 
+  // @override
+  // Future<void> read(Float32List outputData, int readElements,
+  //     {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
+  //   // Determine the number of elements to read.
+  //   final int totalElements = outputData.length;
+  //   final int sizeToRead = readElements != 0
+  //       ? readElements
+  //       : (readBytes != 0
+  //           ? readBytes ~/ sizeOf<Float>()
+  //           : totalElements - elementOffset);
+
+  //   // Calculate effective byte offset:
+  //   // If readElements is provided, we use elementOffset * sizeOf<Float>().
+  //   // Otherwise, we use the provided byteOffset.
+  //   final int effectiveByteOffset =
+  //       readElements != 0 ? elementOffset * sizeOf<Float>() : byteOffset;
+
+  //   final int byteSize = sizeToRead * sizeOf<Float>();
+  //   final Pointer<Float> outputPtr = malloc.allocate<Float>(byteSize);
+  //   final List<double> outputTypedList = outputPtr.asTypedList(sizeToRead);
+
+  //   // Pass byteSize and effective offset to the native binding.
+  //   _bindings.mgpuReadBufferSync(
+  //       _self, outputPtr, byteSize, effectiveByteOffset);
+
+  //   // Copy the read data into outputData starting at elementOffset.
+  //   outputData.setAll(elementOffset, outputTypedList);
+  //   malloc.free(outputPtr);
+  //   return Future.value();
+  // }
+
   @override
-  Future<void> read(Float32List outputData, int readElements,
-      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
-    // Determine the number of elements to read.
+  Future<void> read(
+    Float32List outputData,
+    int readElements, {
+    int elementOffset = 0,
+    int readBytes = 0,
+    int byteOffset = 0,
+  }) async {
+    // Determine how many elements to read.
     final int totalElements = outputData.length;
     final int sizeToRead = readElements != 0
         ? readElements
@@ -114,24 +173,53 @@ final class FfiBuffer implements PlatformBuffer {
             ? readBytes ~/ sizeOf<Float>()
             : totalElements - elementOffset);
 
-    // Calculate effective byte offset:
-    // If readElements is provided, we use elementOffset * sizeOf<Float>().
-    // Otherwise, we use the provided byteOffset.
+    // Calculate effective byte offset: if readElements is given we use elementOffset * sizeOf<ffi.Float>(),
+    // otherwise we use the provided byteOffset.
     final int effectiveByteOffset =
         readElements != 0 ? elementOffset * sizeOf<Float>() : byteOffset;
 
+    // byteSize in bytes to pass to the native function.
     final int byteSize = sizeToRead * sizeOf<Float>();
+
+    // Allocate a temporary native Float array to receive the data.
     final Pointer<Float> outputPtr = malloc.allocate<Float>(byteSize);
-    final List<double> outputTypedList = outputPtr.asTypedList(sizeToRead);
 
-    // Pass byteSize and effective offset to the native binding.
-    _bindings.mgpuReadBufferSync(
-        _self, outputPtr, byteSize, effectiveByteOffset);
+    // Create a completer that will be completed when the native callback fires.
+    final completer = Completer<void>();
 
-    // Copy the read data into outputData starting at elementOffset.
-    outputData.setAll(elementOffset, outputTypedList);
+    // This is the native callback, which must match the MGPUCallback signature.
+    void nativeCallback() {
+      // Signal that the asynchronous native operation completed.
+      completer.complete();
+    }
+
+    // Wrap the Dart function as a native callable.
+    final nativeCallable =
+        NativeCallable<Void Function()>.listener(nativeCallback);
+
+    // Call the asynchronous native function.
+    // _self is your MGPUBuffer pointer; _bindings.mgpuReadBufferAsync was set up from the FFI lookup.
+    _bindings.mgpuReadBufferAsync(
+      _self,
+      outputPtr,
+      byteSize,
+      effectiveByteOffset,
+      nativeCallable.nativeFunction,
+    );
+
+    // Wait until the callback signals that the data is ready.
+    await completer.future;
+
+    // Convert the native memory to a Dart typed list.
+    final List<double> readData = outputPtr.asTypedList(sizeToRead);
+    // Copy the data into the provided outputData starting at elementOffset.
+    outputData.setAll(elementOffset, readData);
+
+    // Free the allocated native memory and close the native callback.
     malloc.free(outputPtr);
-    return Future.value();
+    nativeCallable.close();
+
+    return;
   }
 
   @override

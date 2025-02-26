@@ -14,6 +14,8 @@ namespace mgpu
         bool hasKernel() const;
         void setBuffer(int tag, const Buffer &buffer);
         void dispatch(int groupsX, int groupsY, int groupsZ);
+        void dispatchAsync(int groupsX, int groupsY, int groupsZ,
+                          std::function<void()> callback);
 
     private:
         gpu::KernelCode code;

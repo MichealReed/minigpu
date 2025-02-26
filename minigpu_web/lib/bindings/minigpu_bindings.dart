@@ -143,9 +143,7 @@ Future<void> mgpuReadBufferSync(
   // Determine the number of elements to read.
   final int sizeToRead = (readElements > 0)
       ? readElements * Float32List.bytesPerElement
-      : (readBytes > 0
-          ? readBytes
-          : (outputData.length - elementOffset) * Float32List.bytesPerElement);
+      : (readBytes > 0 ? readBytes : (outputData.length - elementOffset));
 
   // If readElements is provided, calculate the effective byte offset based on element count.
   final int effectiveByteOffset = (readElements > 0)
@@ -164,13 +162,11 @@ Future<void> mgpuReadBufferSync(
       {"async": true}.toJSDeep,
     ).toDart;
 
-    final output = _heapF32.sublist(startIndex, startIndex + sizeToRead);
+    final int elementsToRead = sizeToRead ~/ Float32List.bytesPerElement;
+
+    final output = _heapF32.sublist(startIndex, startIndex + elementsToRead);
     outputData.setAll(elementOffset, output);
-    print("first float: ${outputData[elementOffset]}");
-    print("last float: ${outputData[elementOffset + sizeToRead - 1]}");
-  } finally {
-    _free(ptr);
-  }
+  } finally {}
 }
 
 @JS('_mgpuSetBufferData')
