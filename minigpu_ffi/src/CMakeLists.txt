@@ -26,7 +26,7 @@ endif()
 
 set(MAIN_PATH      ${CMAKE_CURRENT_SOURCE_DIR})
 set(MAIN_OUT_PATH  ${CMAKE_CURRENT_BINARY_DIR})
-set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/build)
+set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/web)
 
 #  Create the Main Target 
 if(NOT EMSCRIPTEN)
