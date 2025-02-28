@@ -49,7 +49,6 @@ external MGPUComputeShader _mgpuCreateComputeShader();
 
 MGPUComputeShader mgpuCreateComputeShader() {
   MGPUComputeShader shader = _mgpuCreateComputeShader();
-  print("SHADER PTR  $shader");
   return shader;
 }
 

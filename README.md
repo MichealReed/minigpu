@@ -1,8 +1,13 @@
 
 # minigpu
 
- A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.CPP, and WebGPU via Dawn.
+A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.CPP, and WebGPU via Dawn.
 
+Try it: https://minigpu.practicalxr.com/
+
+Use it: pub.dev coming soon
+
+Flutter is needed until dart supports native building.
 https://docs.flutter.dev/get-started/install
 
 ```console
