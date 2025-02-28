@@ -44,8 +44,6 @@ void Buffer::createBuffer(int bufferSize) {
   descriptor.mappedAtCreation = false;
   descriptor.label = {.data = nullptr, .length = 0};
 
-  LOG(kDefLog, kInfo, "Creating buffer with elements: bytes: %d", bufferSize);
-
   WGPUBuffer buffer =
       wgpuDeviceCreateBuffer(this->mgpu.getContext().device, &descriptor);
   if (buffer == nullptr) {
@@ -61,9 +59,6 @@ void Buffer::createBuffer(int bufferSize) {
 }
 
 void Buffer::readSync(void *outputData, size_t size, size_t offset) {
-  // Log entry into readSync along with the pointer and size.
-  LOG(kDefLog, kInfo, "Entering Buffer::readSync, outputData: %p, size: %zu",
-      outputData, size);
 
   gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
 
@@ -75,8 +70,6 @@ void Buffer::readSync(void *outputData, size_t size, size_t offset) {
   float *data = reinterpret_cast<float *>(outputData);
   size_t numFloats = size / sizeof(float);
   if (numFloats > 0) {
-    LOG(kDefLog, kInfo, "readSync: First float: %f, Last float: %f", data[0],
-        data[numFloats - 1]);
     // log all floats in single concatenated string
     std::string floatString = "readSync: Floats: ";
     for (size_t i = 0; i < numFloats; i++) {
@@ -111,10 +104,6 @@ void Buffer::setData(const float *inputData, size_t byteSize) {
   if (bufferData.buffer == nullptr || byteSize > bufferData.size) {
     createBuffer(byteSize);
   }
-
-  LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer: %p, size: %zu",
-      (void *)bufferData.buffer, byteSize);
-  // log elements of buffer as single concatenated string
   std::string bufferString = "mgpuSetBufferData: Buffer: ";
   for (size_t i = 0; i < byteSize / sizeof(float); i++) {
     bufferString += std::to_string(inputData[i]);
@@ -122,13 +111,11 @@ void Buffer::setData(const float *inputData, size_t byteSize) {
       bufferString += ", ";
     }
   }
-  LOG(kDefLog, kInfo, bufferString.c_str());
+  //LOG(kDefLog, kInfo, bufferString.c_str());
 
   // Copy the input data to the buffer using gpu::toGPU
   gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, byteSize);
 
-  LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f",
-      inputData[byteSize - 1]);
 }
 
 void Buffer::release() { wgpuBufferRelease(bufferData.buffer); }

@@ -123,12 +123,8 @@ void mgpuReadBufferAsync(MGPUBuffer *buffer, float *outputData, size_t size,
 
 void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData,
                        size_t byteSize) {
-  printf("mgpuSetBufferData called\n");
-  printf("buffer: %p\n", buffer);
   if (buffer && inputData) {
     reinterpret_cast<mgpu::Buffer *>(buffer)->setData(inputData, byteSize);
-    LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f",
-        inputData[byteSize - 1]);
   } else {
     LOG(kDefLog, kError, "Invalid buffer or inputData pointer");
   }

@@ -61,7 +61,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
     let i: u32 = GlobalInvocationID.x;
     if (i < arrayLength(&inp)) {
         let x: f32 = inp[i];
-        out[i] = select(0.5 * x * (1.0 + tanh(GELU_SCALING_FACTOR * (x + .044715 * x * x * x))), x, x > 10.0);
+        //out[i] = select(0.5 * x * (1.0 + tanh(GELU_SCALING_FACTOR * (x + .044715 * x * x * x))), x, x > 10.0);
+        out[i] = inp[i] + .2;
     }
 }
 ''';

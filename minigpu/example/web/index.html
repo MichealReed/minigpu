@@ -34,6 +34,26 @@
   <link rel="manifest" href="manifest.json">
 
   <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (!('gpu' in navigator)) {
+        const warning = document.createElement('div');
+        warning.style.position = 'fixed';
+        warning.style.top = '0';
+        warning.style.left = '0';
+        warning.style.width = '100%';
+        warning.style.backgroundColor = '#F90707FF';
+        warning.style.color = 'white';
+        warning.style.padding = '10px';
+        warning.style.textAlign = 'center';
+        warning.style.fontWeight = 'bold';
+        warning.style.zIndex = 1000;
+        warning.innerText = 'Warning: Your browser does not support WebGPU. Please enable it or switch to a compatible browser.';
+        document.body.appendChild(warning);
+      }
+    });
+  </script>
+
+  <script>
     // The value below is injected by flutter build, do not touch.
     var serviceWorkerVersion = null;
   </script>
