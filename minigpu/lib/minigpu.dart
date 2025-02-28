@@ -8,22 +8,25 @@ final class Minigpu {
     _finalizer.attach(this, _platform);
   }
 
-  static final _finalizer =
-      Finalizer<MinigpuPlatform>((platform) => platform.destroyContext());
-  static final _shaderFinalizer =
-      Finalizer<ComputeShader>((shader) => shader.destroy());
-  static final _bufferFinalizer =
-      Finalizer<Buffer>((buffer) => buffer.destroy());
+  static final _finalizer = Finalizer<MinigpuPlatform>(
+    (platform) => platform.destroyContext(),
+  );
+  static final _shaderFinalizer = Finalizer<ComputeShader>(
+    (shader) => shader.destroy(),
+  );
+  static final _bufferFinalizer = Finalizer<Buffer>(
+    (buffer) => buffer.destroy(),
+  );
 
   final _platform = MinigpuPlatform.instance;
-  var isInit = false;
+  bool isInitialized = false;
 
   /// Initializes the minigpu context.
   Future<void> init() async {
-    if (isInit) throw MinigpuAlreadyInitError();
+    if (isInitialized) throw MinigpuAlreadyInitError();
 
     await _platform.initializeContext();
-    isInit = true;
+    isInitialized = true;
   }
 
   /// Creates a compute shader.
@@ -82,9 +85,11 @@ final class Buffer {
   final PlatformBuffer _buffer;
 
   /// Reads data from the buffer synchronously.
-  Future<void> read(Float32List outputData, int size,
-          {int readOffset = 0}) async =>
-      _buffer.read(outputData, size, elementOffset: readOffset);
+  Future<void> read(
+    Float32List outputData,
+    int size, {
+    int readOffset = 0,
+  }) async => _buffer.read(outputData, size, elementOffset: readOffset);
 
   /// Writes data to the buffer.
   void setData(Float32List inputData, int size) =>
@@ -100,7 +105,8 @@ class MinigpuAlreadyInitError extends Error {
   final String? message;
 
   @override
-  String toString() => message == null
-      ? 'Minigpu already initialized'
-      : 'Minigpu already initialized: $message';
+  String toString() =>
+      message == null
+          ? 'Minigpu already initialized'
+          : 'Minigpu already initialized: $message';
 }
