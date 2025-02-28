@@ -117,21 +117,18 @@ class minigpuFfiBindings {
       .asFunction<int Function(ffi.Pointer<MGPUComputeShader>)>();
 
   ffi.Pointer<MGPUBuffer> mgpuCreateBuffer(
-    int size,
-    int memSize,
+    int bufferSize,
   ) {
     return _mgpuCreateBuffer(
-      size,
-      memSize,
+      bufferSize,
     );
   }
 
-  late final _mgpuCreateBufferPtr = _lookup<
-          ffi
-          .NativeFunction<ffi.Pointer<MGPUBuffer> Function(ffi.Int, ffi.Int)>>(
-      'mgpuCreateBuffer');
-  late final _mgpuCreateBuffer = _mgpuCreateBufferPtr
-      .asFunction<ffi.Pointer<MGPUBuffer> Function(int, int)>();
+  late final _mgpuCreateBufferPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<MGPUBuffer> Function(ffi.Int)>>(
+          'mgpuCreateBuffer');
+  late final _mgpuCreateBuffer =
+      _mgpuCreateBufferPtr.asFunction<ffi.Pointer<MGPUBuffer> Function(int)>();
 
   void mgpuDestroyBuffer(
     ffi.Pointer<MGPUBuffer> buffer,

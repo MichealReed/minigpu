@@ -23,11 +23,11 @@ private:
 class Buffer {
 public:
   Buffer(MGPU &mgpu);
-  void createBuffer(int size, int memSize);
+  void createBuffer(int bufferSize);
   void readSync(void *outputData, size_t size, size_t offset = 0);
   void readAsync(void *outputData, size_t size, size_t offset,
                  std::function<void()> callback);
-  void setData(const float *inputData, size_t size);
+  void setData(const float *inputData, size_t byteSize);
   void release();
 
   gpu::Array bufferData;

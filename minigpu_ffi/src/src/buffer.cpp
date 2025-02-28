@@ -35,17 +35,16 @@ Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu) {
   bufferData.usage = 0;
   bufferData.size = 0;
 }
-void Buffer::createBuffer(int numElements, int memSize) {
+void Buffer::createBuffer(int bufferSize) {
   WGPUBufferUsage usage = WGPUBufferUsage_Storage | WGPUBufferUsage_CopyDst |
                           WGPUBufferUsage_CopySrc;
   WGPUBufferDescriptor descriptor = {};
   descriptor.usage = usage;
-  descriptor.size = static_cast<uint64_t>(memSize);
+  descriptor.size = static_cast<uint64_t>(bufferSize);
   descriptor.mappedAtCreation = false;
   descriptor.label = {.data = nullptr, .length = 0};
 
-  LOG(kDefLog, kInfo, "Creating buffer with elements: %d, bytes: %d",
-      numElements, memSize);
+  LOG(kDefLog, kInfo, "Creating buffer with elements: bytes: %d", bufferSize);
 
   WGPUBuffer buffer =
       wgpuDeviceCreateBuffer(this->mgpu.getContext().device, &descriptor);
@@ -57,7 +56,7 @@ void Buffer::createBuffer(int numElements, int memSize) {
   bufferData = gpu::Array{
       .buffer = buffer,
       .usage = usage,
-      .size = static_cast<size_t>(memSize),
+      .size = static_cast<size_t>(bufferSize),
   };
 }
 
@@ -107,29 +106,29 @@ void Buffer::readAsync(void *outputData, size_t size, size_t offset,
   }).detach();
 }
 
-void Buffer::setData(const float *inputData, size_t size) {
+void Buffer::setData(const float *inputData, size_t byteSize) {
   // Check if we need to create or resize the buffer
-  if (bufferData.buffer == nullptr || size > bufferData.size) {
-    createBuffer(size / sizeof(float), size);
+  if (bufferData.buffer == nullptr || byteSize > bufferData.size) {
+    createBuffer(byteSize);
   }
 
   LOG(kDefLog, kInfo, "mgpuSetBufferData called buffer: %p, size: %zu",
-      (void *)bufferData.buffer, size);
+      (void *)bufferData.buffer, byteSize);
   // log elements of buffer as single concatenated string
   std::string bufferString = "mgpuSetBufferData: Buffer: ";
-  for (size_t i = 0; i < size / sizeof(float); i++) {
+  for (size_t i = 0; i < byteSize / sizeof(float); i++) {
     bufferString += std::to_string(inputData[i]);
-    if (i < size / sizeof(float) - 1) {
+    if (i < byteSize / sizeof(float) - 1) {
       bufferString += ", ";
     }
   }
   LOG(kDefLog, kInfo, bufferString.c_str());
 
   // Copy the input data to the buffer using gpu::toGPU
-  gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, size);
+  gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, byteSize);
 
   LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f",
-      inputData[size - 1]);
+      inputData[byteSize - 1]);
 }
 
 void Buffer::release() { wgpuBufferRelease(bufferData.buffer); }

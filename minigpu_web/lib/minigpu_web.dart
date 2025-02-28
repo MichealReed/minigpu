@@ -25,8 +25,8 @@ class MinigpuWeb extends MinigpuPlatform {
   }
 
   @override
-  PlatformBuffer createBuffer(int size, int memSize) {
-    final buff = wasm.mgpuCreateBuffer(size, memSize);
+  PlatformBuffer createBuffer(int bufferSize) {
+    final buff = wasm.mgpuCreateBuffer(bufferSize);
     return WebBuffer(buff);
   }
 }
@@ -69,8 +69,13 @@ class WebBuffer implements PlatformBuffer {
   WebBuffer(this._buffer);
 
   @override
-  Future<void> read(Float32List outputData, int readElements,
-      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0}) async {
+  Future<void> read(
+    Float32List outputData,
+    int readElements, {
+    int elementOffset = 0,
+    int readBytes = 0,
+    int byteOffset = 0,
+  }) async {
     await wasm.mgpuReadBufferSync(
       _buffer,
       outputData,

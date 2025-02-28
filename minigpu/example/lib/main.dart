@@ -72,12 +72,13 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
     await _minigpu.init();
     _createBuffers();
     _setBufferData();
+    _shader = _minigpu.createComputeShader();
   }
 
   void _createBuffers() {
     int memSize = _bufferSize * floatSize;
-    _inputBuffer = _minigpu.createBuffer(_bufferSize, memSize);
-    _outputBuffer = _minigpu.createBuffer(_bufferSize, memSize);
+    _inputBuffer = _minigpu.createBuffer(memSize);
+    _outputBuffer = _minigpu.createBuffer(memSize);
   }
 
   void _setBufferData() {
@@ -120,7 +121,6 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
   }
 
   Future<void> _runKernel() async {
-    _shader = _minigpu.createComputeShader();
     _shader.loadKernelString(_shaderController.text);
     _shader.setBuffer('inp', _inputBuffer);
     _shader.setBuffer('out', _outputBuffer);

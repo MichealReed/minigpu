@@ -57,9 +57,9 @@ int mgpuHasKernel(MGPUComputeShader *shader) {
   }
 }
 
-MGPUBuffer *mgpuCreateBuffer(int size, int memSize) {
+MGPUBuffer *mgpuCreateBuffer(int bufferSize) {
   auto *buf = new mgpu::Buffer(minigpu);
-  buf->createBuffer(size, memSize);
+  buf->createBuffer(bufferSize);
   return reinterpret_cast<MGPUBuffer *>(buf);
 }
 
@@ -122,13 +122,13 @@ void mgpuReadBufferAsync(MGPUBuffer *buffer, float *outputData, size_t size,
 }
 
 void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData,
-                       size_t size) {
+                       size_t byteSize) {
   printf("mgpuSetBufferData called\n");
   printf("buffer: %p\n", buffer);
   if (buffer && inputData) {
-    reinterpret_cast<mgpu::Buffer *>(buffer)->setData(inputData, size);
+    reinterpret_cast<mgpu::Buffer *>(buffer)->setData(inputData, byteSize);
     LOG(kDefLog, kInfo, "mgpuSetBufferData called inputData last: %f",
-        inputData[size - 1]);
+        inputData[byteSize - 1]);
   } else {
     LOG(kDefLog, kError, "Invalid buffer or inputData pointer");
   }

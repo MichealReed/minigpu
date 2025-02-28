@@ -93,10 +93,10 @@ bool mgpuHasKernel(MGPUComputeShader shader) {
 
 // Buffer functions
 @JS('_mgpuCreateBuffer')
-external MGPUBuffer _mgpuCreateBuffer(JSNumber size, JSNumber memSize);
+external MGPUBuffer _mgpuCreateBuffer(JSNumber bufferSize);
 
-MGPUBuffer mgpuCreateBuffer(int size, int memSize) {
-  return _mgpuCreateBuffer(size.toJS, memSize.toJS);
+MGPUBuffer mgpuCreateBuffer(int bufferSize) {
+  return _mgpuCreateBuffer(bufferSize.toJS);
 }
 
 @JS('_mgpuDestroyBuffer')

@@ -21,7 +21,7 @@ extern "C"
     EXPORT void mgpuDestroyComputeShader(MGPUComputeShader *shader);
     EXPORT void mgpuLoadKernel(MGPUComputeShader *shader, const char *kernelString);
     EXPORT int mgpuHasKernel(MGPUComputeShader *shader);
-    EXPORT MGPUBuffer *mgpuCreateBuffer(int size, int memSize);
+    EXPORT MGPUBuffer *mgpuCreateBuffer(int bufferSize);
     EXPORT void mgpuDestroyBuffer(MGPUBuffer *buffer);
     EXPORT void mgpuSetBuffer(MGPUComputeShader *shader, int tag, MGPUBuffer *buffer);
     EXPORT void mgpuDispatch(MGPUComputeShader *shader, int groupsX, int groupsY, int groupsZ);
@@ -32,7 +32,7 @@ extern "C"
         size_t size,
         size_t offset,
         MGPUCallback callback);
-    EXPORT void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData, size_t size);
+    EXPORT void mgpuSetBufferData(MGPUBuffer *buffer, const float *inputData, size_t byteSize);
 
 #ifdef __cplusplus
 }

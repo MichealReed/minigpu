@@ -19,7 +19,7 @@ abstract class MinigpuPlatform extends PlatformInterface {
   Future<void> initializeContext();
   void destroyContext();
   PlatformComputeShader createComputeShader();
-  PlatformBuffer createBuffer(int size, int memSize);
+  PlatformBuffer createBuffer(int bufferSize);
 }
 
 abstract class PlatformComputeShader {
@@ -31,8 +31,13 @@ abstract class PlatformComputeShader {
 }
 
 abstract class PlatformBuffer {
-  Future<void> read(Float32List outputData, int readElements,
-      {int elementOffset = 0, int readBytes = 0, int byteOffset = 0});
+  Future<void> read(
+    Float32List outputData,
+    int readElements, {
+    int elementOffset = 0,
+    int readBytes = 0,
+    int byteOffset = 0,
+  });
   void setData(Float32List inputData, int size);
   void destroy();
 }

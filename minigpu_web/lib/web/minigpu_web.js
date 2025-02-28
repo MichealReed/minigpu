@@ -5550,7 +5550,7 @@ var _mgpuCreateComputeShader = Module['_mgpuCreateComputeShader'] = () => (_mgpu
 var _mgpuDestroyComputeShader = Module['_mgpuDestroyComputeShader'] = (a0) => (_mgpuDestroyComputeShader = Module['_mgpuDestroyComputeShader'] = wasmExports['mgpuDestroyComputeShader'])(a0);
 var _mgpuLoadKernel = Module['_mgpuLoadKernel'] = (a0, a1) => (_mgpuLoadKernel = Module['_mgpuLoadKernel'] = wasmExports['mgpuLoadKernel'])(a0, a1);
 var _mgpuHasKernel = Module['_mgpuHasKernel'] = (a0) => (_mgpuHasKernel = Module['_mgpuHasKernel'] = wasmExports['mgpuHasKernel'])(a0);
-var _mgpuCreateBuffer = Module['_mgpuCreateBuffer'] = (a0, a1) => (_mgpuCreateBuffer = Module['_mgpuCreateBuffer'] = wasmExports['mgpuCreateBuffer'])(a0, a1);
+var _mgpuCreateBuffer = Module['_mgpuCreateBuffer'] = (a0) => (_mgpuCreateBuffer = Module['_mgpuCreateBuffer'] = wasmExports['mgpuCreateBuffer'])(a0);
 var _mgpuDestroyBuffer = Module['_mgpuDestroyBuffer'] = (a0) => (_mgpuDestroyBuffer = Module['_mgpuDestroyBuffer'] = wasmExports['mgpuDestroyBuffer'])(a0);
 var _mgpuSetBuffer = Module['_mgpuSetBuffer'] = (a0, a1, a2) => (_mgpuSetBuffer = Module['_mgpuSetBuffer'] = wasmExports['mgpuSetBuffer'])(a0, a1, a2);
 var _mgpuDispatch = Module['_mgpuDispatch'] = (a0, a1, a2, a3) => (_mgpuDispatch = Module['_mgpuDispatch'] = wasmExports['mgpuDispatch'])(a0, a1, a2, a3);

@@ -61,8 +61,8 @@ class MinigpuFfi extends MinigpuPlatform {
   }
 
   @override
-  PlatformBuffer createBuffer(int size, int memSize) {
-    final self = _bindings.mgpuCreateBuffer(size, memSize);
+  PlatformBuffer createBuffer(int bufferSize) {
+    final self = _bindings.mgpuCreateBuffer(bufferSize);
     if (self == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return FfiBuffer(self);
   }
