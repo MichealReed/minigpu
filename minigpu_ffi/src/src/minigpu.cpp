@@ -8,13 +8,14 @@ extern "C" {
 MGPU minigpu;
 
 void mgpuInitializeContext() {
-  setLogLevel(4);
   minigpu.initializeContext();
+  kDefLog.level = 1;
 }
 
 void mgpuInitializeContextAsync(MGPUCallback callback) {
-  setLogLevel(4);
+
   minigpu.initializeContextAsync(callback);
+  kDefLog.level = 1;
 }
 
 void mgpuDestroyContext() { minigpu.destroyContext(); }
@@ -114,8 +115,8 @@ void mgpuReadBufferSync(MGPUBuffer *buffer, float *outputData, size_t size,
 void mgpuReadBufferAsync(MGPUBuffer *buffer, float *outputData, size_t size,
                          size_t offset, MGPUCallback callback) {
   if (buffer && outputData && callback) {
-    reinterpret_cast<mgpu::Buffer *>(buffer)->readAsync(
-        outputData, size, offset, callback);
+    reinterpret_cast<mgpu::Buffer *>(buffer)->readAsync(outputData, size,
+                                                        offset, callback);
   } else {
     LOG(kDefLog, kError, "Invalid buffer, outputData, or callback pointer");
   }

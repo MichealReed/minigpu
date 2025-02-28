@@ -78,12 +78,11 @@ void Buffer::readSync(void *outputData, size_t size, size_t offset) {
         floatString += ", ";
       }
     }
-    LOG(kDefLog, kInfo, floatString.c_str());
+    //LOG(kDefLog, kInfo, floatString.c_str());
   } else {
     LOG(kDefLog, kInfo, "readSync: Not enough data to display float values");
   }
 
-  LOG(kDefLog, kInfo, "Exiting Buffer::readSync");
 }
 
 void Buffer::readAsync(void *outputData, size_t size, size_t offset,

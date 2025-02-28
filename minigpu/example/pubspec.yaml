@@ -1,4 +1,4 @@
-name: example
+name: minigpu_example
 description: Demonstrates how to use the minigpu package.
 version: 1.0.0
 publish_to: none
