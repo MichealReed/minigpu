@@ -77,10 +77,14 @@ if(NOT EMSCRIPTEN)
     # For tests, you may also want to expose the test sources in the main target;
     # adjust the following as needed
     target_link_libraries(minigpu_test PRIVATE gpu ${WEBGPU_DAWN_MONOLITHIC} ${MAIN_LIB})
+    target_link_libraries(gpu PRIVATE webgpu_dawn)
+else()
+    target_link_libraries(${MAIN_LIB} PRIVATE webgpu_web)
 endif()
 
+
 # Link Libraries 
-target_link_libraries(gpu PRIVATE webgpu_dawn)
+
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
 # MSVC Specific: Copy DLL to Runner Folder
