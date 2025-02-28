@@ -24,13 +24,14 @@ flutter build apk
  ```dart
 
 Future<void> _runGELU() async {
-// Initialize the GPU.
-    await _minigpu = Minigpu();
-// Create the compute shader.
-    _shader = _minigpu.createComputeShader();
+  // Initialize the GPU.
+  final gpu = Minigpu();
+  await gpu.init();
+  // Create the compute shader.
+  final shader = gpu.createComputeShader();
 
 // Load the compute kernel code as a string.
-    _shader.loadKernelString('''
+  shader.loadKernelString('''
 const GELU_SCALING_FACTOR: f32 = 0.7978845608028654; // sqrt(2.0 / PI)
 @group(0) @binding(0) var<storage, read_write> inp: array<f32>;
 @group(0) @binding(1) var<storage, read_write> out: array<f32>;
@@ -61,30 +62,30 @@ fn main(
   final memSize = bufferSize * 4; // 4 bytes per float32
 
 // Create GPU buffers for input and output data.
-  _inputBuffer = _minigpu.createBuffer(bufferSize, memSize);
-  _outputBuffer = _minigpu.createBuffer(bufferSize, memSize);
+  final inputBuffer = gpu.createBuffer(bufferSize, memSize);
+  final outputBuffer = gpu.createBuffer(bufferSize, memSize);
 
 // Upload the input data.
-  _inputBuffer.setData(inputData, bufferSize);
+  inputBuffer.setData(inputData, bufferSize);
 
 // Bind the buffers to the shader.
-  _shader.setBuffer('inp', _inputBuffer);
-  _shader.setBuffer('out', _outputBuffer);
+  shader.setBuffer('inp', inputBuffer);
+  shader.setBuffer('out', outputBuffer);
 
 // Calculate the number of workgroups required.
   final workgroups = ((bufferSize + 255) / 256).floor();
 
 // Dispatch the compute shader.
-  await _shader.dispatch(workgroups, 1, 1);
+  await shader.dispatch(workgroups, 1, 1);
 
 // Read the output data.
   final outputData = Float32List(bufferSize);
-  await _outputBuffer.read(outputData, bufferSize);
+  await outputBuffer.read(outputData, bufferSize);
 
 // Update the UI 
   setState(() {
-    _result = outputData.sublist(0, 16).map((value) => value.toDouble()).toList();
-    print('Result: $_result');
+    final result = outputData.sublist(0, 16).map((value) => value.toDouble()).toList();
+    print('Result: $result');
   });
 }
   ```
