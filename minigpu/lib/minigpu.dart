@@ -65,7 +65,7 @@ final class ComputeShader {
     if (!_kernelTags.containsKey(tag)) {
       _kernelTags[tag] = _kernelTags.length;
     } else {
-      throw Exception('Tag $tag already exists');
+      _kernelTags[tag] = _kernelTags[tag]!;
     }
     _shader.setBuffer(_kernelTags[tag]!, buffer._buffer);
   }

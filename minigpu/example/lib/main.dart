@@ -243,6 +243,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
                             }
                             _createBuffers();
                             _initializeBuffer();
+                            _shader.setBuffer('inp', _inputBuffer);
+                            _shader.setBuffer('out', _outputBuffer);
                           });
                         },
                       ),
