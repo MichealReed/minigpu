@@ -5,5 +5,5 @@
  - [x] Linux Desktop
  - [ ] MacOS
  - [x] Web
- - [ ] Android
+ - [x] Android
  - [ ] iOS
