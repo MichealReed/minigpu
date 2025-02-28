@@ -8,6 +8,10 @@ void main() {
   runApp(MyApp());
 }
 
+int roundToBytesize(double value, {int byteSize = 4}) {
+  return ((value / byteSize).round()) * byteSize;
+}
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -233,7 +237,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
                       child: Slider(
                         min: 10,
                         max: 200,
-                        divisions: 190,
+                        divisions: 40,
                         value: _bufferSize.toDouble(),
                         onChanged: (val) {
                           setState(() {

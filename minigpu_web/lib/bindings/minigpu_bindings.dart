@@ -68,9 +68,10 @@ external void _mgpuLoadKernel(MGPUComputeShader shader, JSNumber kernelString);
 
 void mgpuLoadKernel(MGPUComputeShader shader, String kernelString) {
   final bytes = utf8.encode(kernelString);
-  final kernelBytes = Uint8List(bytes.length + 1)
-    ..setRange(0, bytes.length, bytes)
-    ..[bytes.length] = 0; // null terminator
+  final kernelBytes =
+      Uint8List(bytes.length + 1)
+        ..setRange(0, bytes.length, bytes)
+        ..[bytes.length] = 0; // null terminator
 
   // Allocate memory for the string.
   final allocSize = kernelBytes.length * kernelBytes.elementSizeInBytes;
@@ -107,7 +108,10 @@ void mgpuDestroyBuffer(MGPUBuffer buffer) {
 
 @JS('_mgpuSetBuffer')
 external void _mgpuSetBuffer(
-    MGPUComputeShader shader, JSNumber tag, MGPUBuffer buffer);
+  MGPUComputeShader shader,
+  JSNumber tag,
+  MGPUBuffer buffer,
+);
 
 void mgpuSetBuffer(MGPUComputeShader shader, int tag, MGPUBuffer buffer) {
   try {
@@ -116,7 +120,11 @@ void mgpuSetBuffer(MGPUComputeShader shader, int tag, MGPUBuffer buffer) {
 }
 
 Future<void> mgpuDispatch(
-    MGPUComputeShader shader, int groupsX, int groupsY, int groupsZ) async {
+  MGPUComputeShader shader,
+  int groupsX,
+  int groupsY,
+  int groupsZ,
+) async {
   try {
     await ccall(
       "mgpuDispatch".toJS,
@@ -129,8 +137,13 @@ Future<void> mgpuDispatch(
 }
 
 @JS('ccall')
-external JSPromise ccall(JSString name, JSString returnType, JSArray argTypes,
-    JSArray args, JSObject opts);
+external JSPromise ccall(
+  JSString name,
+  JSString returnType,
+  JSArray argTypes,
+  JSArray args,
+  JSObject opts,
+);
 
 Future<void> mgpuReadBufferSync(
   MGPUBuffer buffer,
@@ -141,14 +154,16 @@ Future<void> mgpuReadBufferSync(
   int byteOffset = 0,
 }) async {
   // Determine the number of elements to read.
-  final int sizeToRead = (readElements > 0)
-      ? readElements * Float32List.bytesPerElement
-      : (readBytes > 0 ? readBytes : (outputData.length - elementOffset));
+  final int sizeToRead =
+      (readElements > 0)
+          ? readElements * Float32List.bytesPerElement
+          : (readBytes > 0 ? readBytes : (outputData.length - elementOffset));
 
   // If readElements is provided, calculate the effective byte offset based on element count.
-  final int effectiveByteOffset = (readElements > 0)
-      ? elementOffset * Float32List.bytesPerElement
-      : byteOffset;
+  final int effectiveByteOffset =
+      (readElements > 0)
+          ? elementOffset * Float32List.bytesPerElement
+          : byteOffset;
 
   final JSNumber ptr = _malloc(sizeToRead.toJS);
   final int startIndex = ptr.toDartInt ~/ Float32List.bytesPerElement;
@@ -171,7 +186,10 @@ Future<void> mgpuReadBufferSync(
 
 @JS('_mgpuSetBufferData')
 external void _mgpuSetBufferData(
-    MGPUBuffer buffer, JSNumber inputDataPtr, JSNumber size);
+  MGPUBuffer buffer,
+  JSNumber inputDataPtr,
+  JSNumber size,
+);
 
 void mgpuSetBufferData(MGPUBuffer buffer, Float32List inputData, int size) {
   final byteSize = inputData.length * Float32List.bytesPerElement;
@@ -185,9 +203,6 @@ void mgpuSetBufferData(MGPUBuffer buffer, Float32List inputData, int size) {
     _heapF32.setRange(startIndex, endIndex, inputData);
 
     // Call the WASM function with the pointer
-    _mgpuSetBufferData(buffer, ptr, size.toJS);
-  } finally {
-    // Free the allocated memory
-    _free(ptr);
-  }
+    _mgpuSetBufferData(buffer, ptr, byteSize.toJS);
+  } finally {}
 }
