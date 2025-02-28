@@ -30,6 +30,6 @@ flutter:
         fileName: minigpu_web.dart
 
   assets:
-    - packages/minigpu_web/build/minigpu_web.loader.js
-    - packages/minigpu_web/build/minigpu_web.wasm
-    - packages/minigpu_web/build/minigpu_web.js
+    - packages/minigpu_web/web/minigpu_web.loader.js
+    - packages/minigpu_web/web/minigpu_web.wasm
+    - packages/minigpu_web/web/minigpu_web.js

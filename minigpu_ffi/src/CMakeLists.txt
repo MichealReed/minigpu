@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
-project(minigpu_ffi VERSION 1.0.0 LANGUAGES CXX)
+project(minigpu_ffi VERSION 1.0.0)
+cmake_minimum_required(VERSION 3.22.1)
 set(CMAKE_CXX_STANDARD 20)
 
-# ─── Locate the Project Root ─────────────────────────────────────────────
+    # Locate the Project Root
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
 find_project_root("${CMAKE_CURRENT_SOURCE_DIR}" "${FILENAME}" TARGET_FILE_PATH)
 if(TARGET_FILE_PATH)
@@ -11,11 +12,11 @@ else()
     message(FATAL_ERROR "File ${FILENAME} not found within 8 levels up from ${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
-# ─── Include Additional CMake Modules ──────────────────────────────────────
+# Include Additional CMake Modules
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/dawn.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/gpu.cmake")
 
-# ─── Define Main Target Names and Paths ───────────────────────────────────
+# Define Main Target Names and Paths
 if(NOT EMSCRIPTEN)
     set(MAIN_LIB minigpu_ffi)
 else()
@@ -25,22 +26,22 @@ endif()
 
 set(MAIN_PATH      ${CMAKE_CURRENT_SOURCE_DIR})
 set(MAIN_OUT_PATH  ${CMAKE_CURRENT_BINARY_DIR})
-set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/build)
+set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/web)
 
-# ─── Create the Main Target ──────────────────────────────────────────────
+#  Create the Main Target 
 if(NOT EMSCRIPTEN)
     add_library(${MAIN_LIB} SHARED)
 else()
     add_executable(${MAIN_LIB})
 endif()
 
-# ─── Add Source Files and Include Directories ─────────────────────────────
+# Add Source Files and Include Directories 
 file(GLOB_RECURSE MAIN_SOURCES "${MAIN_PATH}/src/*.cpp")
 target_sources(${MAIN_LIB} PRIVATE ${MAIN_SOURCES})
 target_include_directories(${MAIN_LIB} PUBLIC ${MAIN_INCLUDES})
 target_compile_definitions(${MAIN_LIB} PUBLIC DART_SHARED_LIB)
 
-# ─── EMSCRIPTEN-Specific Settings ──────────────────────────────────────────
+# EMSCRIPTEN-Specific Settings
 if(EMSCRIPTEN)
     # Include generated include directory before system includes
     include_directories(BEFORE "${DAWN_BUILD_DIR}/gen/src/emdawnwebgpu/include/")
@@ -69,35 +70,30 @@ if(EMSCRIPTEN)
     ")
 endif()
 
-# ─── Add Test Target (Non-Emscripten Only) ─────────────────────────────────
+# Add Test Target (Non-Emscripten Only)
 if(NOT EMSCRIPTEN)
     set(TEST_SOURCES "${MAIN_PATH}/test/minigpu_test.cpp")
     add_executable(minigpu_test ${TEST_SOURCES})
     # For tests, you may also want to expose the test sources in the main target;
     # adjust the following as needed
     target_link_libraries(minigpu_test PRIVATE gpu ${WEBGPU_DAWN_MONOLITHIC} ${MAIN_LIB})
-endif()
-
-# ─── Link Libraries ────────────────────────────────────────────────────────
-if(MSVC)
-    target_link_libraries(gpu PRIVATE 
-        $<$<CONFIG:Debug>:${WEBGPU_DAWN_DEBUG}>
-        $<$<CONFIG:Release>:${WEBGPU_DAWN_RELEASE}>
-    )
-elseif(NOT EMSCRIPTEN)
     target_link_libraries(gpu PRIVATE webgpu_dawn)
-else()  # EMSCRIPTEN
+else()
     target_link_libraries(${MAIN_LIB} PRIVATE webgpu_web)
 endif()
+
+
+# Link Libraries 
+
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
-# ─── MSVC Specific: Copy DLL to Runner Folder ─────────────────────────────
+# MSVC Specific: Copy DLL to Runner Folder
 get_filename_component(RUNNER_FOLDER ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
 get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
 get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
 set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
 
-if(MSVC)
+if(MSVC AND NOT ANDROID)
     add_custom_command(TARGET ${MAIN_LIB} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${DAWN_BUILD_DIR}/$<CONFIG>/webgpu_dawn.dll
@@ -106,7 +102,7 @@ if(MSVC)
     )
 endif()
 
-# ─── EMSCRIPTEN: Copy JS Sources and Build Outputs to WEB_OUTPUT_DIR ─────
+# EMSCRIPTEN: Copy JS Sources and Build Outputs to WEB_OUTPUT_DIR
 if(EMSCRIPTEN)
     # 1. Copy additional JS sources (e.g. support libraries) from the build_web folder
     file(GLOB JS_SOURCES "${MAIN_PATH}/build_web/*.js")
@@ -140,7 +136,7 @@ if(EMSCRIPTEN)
     )
 endif()
 
-# ─── Android Specific Linking ─────────────────────────────────────────────
+# Android Specific Linking
 if(ANDROID)
-    target_link_libraries(${MAIN_LIB} OpenSLES log)
+   # target_link_libraries(${MAIN_LIB} OpenSLES)
 endif()
