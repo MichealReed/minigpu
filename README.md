@@ -1,5 +1,7 @@
 # minigpu
  A dart/flutter wrapper for GPU.cpp, a webgpu compute header
+ 
+https://docs.flutter.dev/get-started/install
 
 ```console
 cd minigpu/example
