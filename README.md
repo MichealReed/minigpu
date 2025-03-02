@@ -5,7 +5,7 @@ A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.C
 
 Try it: https://minigpu.practicalxr.com/
 
-Use it: pub.dev coming soon
+Use it: https://pub.dev/packages/minigpu
 
 Flutter is needed until dart supports native building.
 https://docs.flutter.dev/get-started/install
