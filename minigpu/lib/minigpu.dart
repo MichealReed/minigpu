@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:minigpu_ffi/minigpu_ffi.dart';
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 
 /// Controls the initialization and destruction of the minigpu context.
@@ -17,6 +18,8 @@ final class Minigpu {
   static final _bufferFinalizer = Finalizer<Buffer>(
     (buffer) => buffer.destroy(),
   );
+
+  final plat = MinigpuPlatform.initialize(MinigpuFfi());
 
   final _platform = MinigpuPlatform.instance;
   bool isInitialized = false;
@@ -89,7 +92,8 @@ final class Buffer {
     Float32List outputData,
     int size, {
     int readOffset = 0,
-  }) async => _buffer.read(outputData, size, elementOffset: readOffset);
+  }) async =>
+      _buffer.read(outputData, size, elementOffset: readOffset);
 
   /// Writes data to the buffer.
   void setData(Float32List inputData, int size) =>
@@ -105,8 +109,7 @@ class MinigpuAlreadyInitError extends Error {
   final String? message;
 
   @override
-  String toString() =>
-      message == null
-          ? 'Minigpu already initialized'
-          : 'Minigpu already initialized: $message';
+  String toString() => message == null
+      ? 'Minigpu already initialized'
+      : 'Minigpu already initialized: $message';
 }

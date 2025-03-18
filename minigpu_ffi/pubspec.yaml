@@ -14,10 +14,11 @@ dependencies:
   ffi: ^2.0.2
   minigpu_platform_interface:
     path: ../minigpu_platform_interface
+  native_toolchain_cmake: ^0.0.3
 
 dev_dependencies:
   flutter_lints: ^2.0.1
-  ffigen: ^8.0.2
+  ffigen: ^18.0.0
 
 #####
 
@@ -43,6 +44,7 @@ ffigen:
     - /usr/lib64/libclang.so
   compiler-opts:
     - -I/usr/lib/clang/18/include/
+  ffi-native:
 
 ##
 

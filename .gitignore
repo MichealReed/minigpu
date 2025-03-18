@@ -32,3 +32,4 @@ doc/api/
 
 third_party/*
 minigpu_ffi/src/external/dawn/*
+**/build_*/

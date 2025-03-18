@@ -1,18 +1,22 @@
+import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+abstract class MinigpuPlatform {
+  MinigpuPlatform(); // No automatic assignment
 
-abstract class MinigpuPlatform extends PlatformInterface {
-  MinigpuPlatform() : super(token: _token);
+  static MinigpuPlatform? _instance;
 
-  static final Object _token = Object();
+  /// Returns the current instance; throws if not yet initialized.
+  static MinigpuPlatform get instance {
+    if (_instance == null) {
+      throw Exception(
+          "MinigpuPlatform is not initialized. Did you call MinigpuPlatform.initialize()?");
+    }
+    return _instance!;
+  }
 
-  static late MinigpuPlatform _instance;
-
-  static MinigpuPlatform get instance => _instance;
-
-  static set instance(MinigpuPlatform instance) {
-    PlatformInterface.verifyToken(instance, _token);
+  /// Explicitly initializes the platform instance.
+  static void initialize(MinigpuPlatform instance) {
     _instance = instance;
   }
 

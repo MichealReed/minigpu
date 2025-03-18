@@ -1,3 +1,3 @@
 void main() {
-  // dart cannot test federated native plugins
+  print('Hello, World!');
 }

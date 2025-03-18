@@ -60,6 +60,8 @@ void Buffer::createBuffer(int bufferSize) {
 
 void Buffer::readSync(void *outputData, size_t size, size_t offset) {
 
+  LOG(kDefLog, kInfo, "readSync: Reading %zu bytes from buffer", size);
+
   gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
 
   // Perform the copy from GPU to CPU.
@@ -78,7 +80,7 @@ void Buffer::readSync(void *outputData, size_t size, size_t offset) {
         floatString += ", ";
       }
     }
-    //LOG(kDefLog, kInfo, floatString.c_str());
+    LOG(kDefLog, kInfo, floatString.c_str());
   } else {
     LOG(kDefLog, kInfo, "readSync: Not enough data to display float values");
   }
@@ -110,7 +112,7 @@ void Buffer::setData(const float *inputData, size_t byteSize) {
       bufferString += ", ";
     }
   }
-  //LOG(kDefLog, kInfo, bufferString.c_str());
+  LOG(kDefLog, kInfo, bufferString.c_str());
 
   // Copy the input data to the buffer using gpu::toGPU
   gpu::toGPU(this->mgpu.getContext(), inputData, bufferData.buffer, byteSize);

@@ -9,13 +9,13 @@ MGPU minigpu;
 
 void mgpuInitializeContext() {
   minigpu.initializeContext();
-  kDefLog.level = 1;
+  setLogLevel(4);
 }
 
 void mgpuInitializeContextAsync(MGPUCallback callback) {
 
   minigpu.initializeContextAsync(callback);
-  kDefLog.level = 1;
+  setLogLevel(4);
 }
 
 void mgpuDestroyContext() { minigpu.destroyContext(); }
