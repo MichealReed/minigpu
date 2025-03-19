@@ -31,6 +31,10 @@ dev_dependencies:
 #####
 
 flutter:
-
+  plugin:
+    platforms:
+      web:
+        default_package: minigpu_web
   assets:
     - assets/hello.shader
+    

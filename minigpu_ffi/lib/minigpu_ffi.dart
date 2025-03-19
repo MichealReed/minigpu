@@ -11,6 +11,8 @@ import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 typedef ReadAsyncCallbackFunc = Void Function(Pointer<Void>);
 typedef ReadAsyncCallback = Pointer<NativeFunction<ReadAsyncCallbackFunc>>;
 
+MinigpuPlatform registeredInstance() => MinigpuFfi();
+
 // Minigpu FFI
 class MinigpuFfi extends MinigpuPlatform {
   MinigpuFfi();

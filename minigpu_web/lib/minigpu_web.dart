@@ -3,10 +3,12 @@ import 'dart:typed_data';
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 import 'package:minigpu_web/bindings/minigpu_bindings.dart' as wasm;
 
+MinigpuPlatform registeredInstance() => MinigpuWeb._();
+
 class MinigpuWeb extends MinigpuPlatform {
   MinigpuWeb._();
-  static void registerWith(dynamic _) =>
-      MinigpuPlatform.instance = MinigpuWeb._();
+
+  static void registerWith(dynamic _) => MinigpuWeb._();
 
   @override
   Future<void> initializeContext() async {

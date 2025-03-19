@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:minigpu/buffer.dart';
+import 'package:minigpu/compute_shader.dart';
 import 'package:minigpu/minigpu.dart';
 
 void main() {
