@@ -46,24 +46,3 @@ ffigen:
     - -I/usr/lib/clang/18/include/
   ffi-native:
 
-##
-
-flutter:
-  plugin:
-    implements: minigpu
-    platforms:
-      android:
-        ffiPlugin: true
-        dartPluginClass: MinigpuFfi
-      ios:
-        ffiPlugin: true
-        dartPluginClass: MinigpuFfi
-      linux:
-        ffiPlugin: true
-        dartPluginClass: MinigpuFfi
-      macos:
-        ffiPlugin: true
-        dartPluginClass: MinigpuFfi
-      windows:
-        ffiPlugin: true
-        dartPluginClass: MinigpuFfi
