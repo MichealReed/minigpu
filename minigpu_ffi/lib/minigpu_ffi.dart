@@ -150,8 +150,6 @@ final class FfiBuffer implements PlatformBuffer {
     final nativeCallable =
         NativeCallable<Void Function()>.listener(nativeCallback);
 
-    print('$outputPtr $_self');
-
     // Call the asynchronous native function.
     // _self is your MGPUBuffer pointer; ffi.mgpuReadBufferAsync was set up from the FFI lookup.
     ffi.mgpuReadBufferAsync(

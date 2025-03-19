@@ -18,8 +18,6 @@ Future<void> main() async {
   // Initialize input data.
   List<double> data = List.generate(bufferSize, (i) => i / 10.0);
   final Float32List inputData = Float32List.fromList(data);
-  print('Input data:');
-  print(inputData);
   inputBuffer.setData(inputData, bufferSize);
 
   // WGSL shader code from the Flutter example.
@@ -51,8 +49,6 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
   // Read and print the output data.
   final Float32List outputData = Float32List(bufferSize);
   await outputBuffer.read(outputData, bufferSize);
-  print('Shader output:');
-  print(outputData);
 
   // Clean up resources.
   shader.destroy();
