@@ -3,13 +3,16 @@ project(minigpu_ffi VERSION 1.0.0)
 cmake_minimum_required(VERSION 3.22.1)
 set(CMAKE_CXX_STANDARD 20)
 
-    # Locate the Project Root
+if(EMSCRIPTEN)
+# Locate the Project Root
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/find_root.cmake")
 find_project_root("${CMAKE_CURRENT_SOURCE_DIR}" "${FILENAME}" TARGET_FILE_PATH)
 if(TARGET_FILE_PATH)
     message(STATUS "Project root found at ${TARGET_FILE_PATH}")
 else()
     message(FATAL_ERROR "File ${FILENAME} not found within 8 levels up from ${CMAKE_CURRENT_SOURCE_DIR}")
+endif()
+set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/web)
 endif()
 
 # Include Additional CMake Modules
@@ -26,7 +29,6 @@ endif()
 
 set(MAIN_PATH      ${CMAKE_CURRENT_SOURCE_DIR})
 set(MAIN_OUT_PATH  ${CMAKE_CURRENT_BINARY_DIR})
-set(WEB_OUTPUT_DIR ${TARGET_FILE_PATH}/minigpu_web/lib/web)
 
 #  Create the Main Target 
 if(NOT EMSCRIPTEN)

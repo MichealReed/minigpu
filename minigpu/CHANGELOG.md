@@ -1,6 +1,8 @@
 # minigpu
 
-## 1.0.8-WIP
+## 1.0.8
+
+- fix: pub.dev still missing project root file
 
 ## 1.0.7
 
