@@ -80,21 +80,38 @@ if(NOT DAWN_BUILD_FOUND)
   set(DAWN_EMSCRIPTEN_TOOLCHAIN    ${EMSCRIPTEN_DIR} CACHE INTERNAL "Emscripten toolchain" FORCE)
 
   set(DAWN_COMMIT "c8e3e6c79d9adcdd5c36d83220ab060f31335484" CACHE STRING "Dawn commit to checkout" FORCE)
+
+    # Initialize Git and set/update remote.
+  execute_process(COMMAND git init
+  WORKING_DIRECTORY "${DAWN_DIR}"
+  )
+  execute_process(
+    COMMAND git remote add origin https://dawn.googlesource.com/dawn
+    WORKING_DIRECTORY "${DAWN_DIR}"
+  )
+  # Fetch and checkout the specified commit.
+  execute_process(
+  COMMAND git fetch --no-recurse-submodules origin ${DAWN_COMMIT}
+  WORKING_DIRECTORY "${DAWN_DIR}"
+  )
+  execute_process(
+  COMMAND git checkout ${DAWN_COMMIT}
+  WORKING_DIRECTORY "${DAWN_DIR}"
+  )
+  execute_process(
+  COMMAND git config submodule.recurse false
+  WORKING_DIRECTORY "${DAWN_DIR}"
+  )
+  execute_process(
+  COMMAND git reset --hard ${DAWN_COMMIT}
+  WORKING_DIRECTORY "${DAWN_DIR}"
+  )
   # Fetch the Dawn repository if not already present.
   FetchContent_Declare(
     dawn
-    DOWNLOAD_DIR ${DAWN_DIR}
     SOURCE_DIR   ${DAWN_DIR}
     SUBBUILD_DIR ${DAWN_BUILD_DIR}/tmp
     BINARY_DIR   ${DAWN_BUILD_DIR}
-    DOWNLOAD_COMMAND
-      cd ${DAWN_DIR} &&
-      git init &&
-      git remote set-url origin https://dawn.googlesource.com/dawn  &&
-      git fetch --no-recurse-submodules origin ${DAWN_COMMIT} &&
-      git checkout ${DAWN_COMMIT} &&
-      git config submodule.recurse false && 
-      git reset --hard ${DAWN_COMMIT}
   )
   FetchContent_MakeAvailable(dawn)
 
