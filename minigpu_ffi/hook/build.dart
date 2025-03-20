@@ -34,9 +34,32 @@ Future<void> runBuild(
   BuildOutputBuilder output,
   Uri sourceDir,
 ) async {
+  Generator generator = Generator.defaultGenerator;
+  switch (input.config.code.targetOS) {
+    case OS.android:
+      generator = Generator.ninja;
+      break;
+    case OS.iOS:
+      generator = Generator.xcode;
+      break;
+    case OS.macOS:
+      generator = Generator.xcode;
+      break;
+    case OS.linux:
+      generator = Generator.ninja;
+      break;
+    case OS.windows:
+      generator = Generator.defaultGenerator;
+      break;
+    case OS.fuchsia:
+      generator = Generator.defaultGenerator;
+      break;
+  }
+
   final builder = CMakeBuilder.create(
     name: name,
     sourceDir: sourceDir,
+    generator: generator,
     defines: {},
   );
   await builder.run(
