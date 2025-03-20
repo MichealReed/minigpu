@@ -7,6 +7,13 @@ Try it: https://minigpu.practicalxr.com/
 
 Use it: https://pub.dev/packages/minigpu
 
+- [x] Windows
+- [x] Linux
+- [x] Mac - Needs testing.
+- [x] Web
+- [x] Android
+- [x] iOS - Needs testing.
+
 ## Three Things to Know
 
 1. Dawn can take a while to build. Run with -v to see progress
@@ -32,13 +39,6 @@ For dart, each run must contain the --enable-experiment=native-assets flag.
  flutter config --enable-native-assets
  flutter run -d chrome/windows/linux/android/ios
 ```
-
-- [x] Windows
-- [x] Linux
-- [x] Mac - Needs testing.
-- [x] Web
-- [x] Android
-- [x] iOS - Needs testing.
 
 ## Example
 
