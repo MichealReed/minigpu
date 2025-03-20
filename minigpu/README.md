@@ -12,7 +12,9 @@ A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.C
 1. Dawn can take a while to build, so run with -v to see progress.
 2. This uses dart native assets, you must use the flag on the dev channel `dart --enable-experiment=native-assets` or for flutter must be on the master channel and
 `flutter config --enable-native-assets` is needed once.
-3. Getting Started
+3. The root makefile can be used to regenerate bindings or the web plugin.
+
+## Getting Started
 
 ```console
 # clone the repo
