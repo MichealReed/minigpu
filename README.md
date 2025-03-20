@@ -3,13 +3,27 @@
 
 A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.CPP, and WebGPU via Dawn.
 
-**This package uses dart native assets.**
+## Three Things to Know
+
+### 1. Dawn can take a while to build. Run with -v to see progress.**
+
+### 2. This package uses dart native assets.**
 
 For flutter, you must be on the master channel and run flutter config --enable-native-assets.
 
 For dart, each run must contain the --enable-experiment=native-assets flag.
 
+### 3. The dart example is located at minigpu/bin/example.dart, the flutter example is located at minigpu/example
+
+ `git clone https://github.com/PracticalXR/minigpu.git`
  `dart --enable-experiment=native-assets test`
+ dart:
+ `cd minigpu`
+ `dart --enable-experiment=native-assets bin/example.dart`
+ flutter:
+ `cd minigpu/example`
+ `flutter config --enable-native-assets`
+  `flutter run -d chrome/windows/linux/android/ios`
 
 Try it: https://minigpu.practicalxr.com/
 
@@ -27,10 +41,10 @@ flutter build apk
 
 - [x] Windows
 - [x] Linux
-- [ ] Mac - Try it and open issue!
+- [x] Mac - Needs testing.
 - [x] Web
 - [x] Android
-- [ ] iOS - Try it and open issue!
+- [x] iOS - Needs testing.
 
 ## Example
 

@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:native_assets_cli/native_assets_cli.dart';
 import 'package:logging/logging.dart';
 import 'package:native_assets_cli/code_assets_builder.dart';
