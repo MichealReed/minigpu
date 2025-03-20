@@ -40,10 +40,10 @@ Future<void> runBuild(
       generator = Generator.ninja;
       break;
     case OS.iOS:
-      generator = Generator.xcode;
+      generator = Generator.make;
       break;
     case OS.macOS:
-      generator = Generator.xcode;
+      generator = Generator.make;
       break;
     case OS.linux:
       generator = Generator.ninja;
