@@ -22,7 +22,16 @@ Use it: https://pub.dev/packages/minigpu
 For flutter, you must be on the master channel and run flutter config --enable-native-assets.
 For dart, each run must contain the --enable-experiment=native-assets flag.
 
-3. The dart example is located at minigpu/bin/example.dart, the flutter example is located at minigpu/example.
+3. For flutter web, add
+
+```html
+  <script src="assets/packages/minigpu_web/web/minigpu_web.loader.js"></script>
+  <script>
+    _minigpu.loader.load();
+  </script>
+```
+
+to your web/index.html file.
 
 ## Getting Started
 
