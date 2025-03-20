@@ -2,9 +2,9 @@
 
 ## 1.0.1
 
-- Uses dart native assets 
-https://github.com/flutter/flutter/issues/129757
-- 
+- breaking: Uses dart native assets
+see updated readme.
+- implements platform stub
 
 ## 1.0.0
 
