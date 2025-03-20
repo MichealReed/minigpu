@@ -1,6 +1,10 @@
 # minigpu
 
-## 1.0.5-WIP
+## 1.0.6-WIP
+
+## 1.0.5
+
+- fix: must have flutter in pubspec or pub.dev analysis fails
 
 ## 1.0.4
 
