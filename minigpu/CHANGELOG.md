@@ -1,6 +1,10 @@
 # minigpu
 
-## 1.0.4-WIP
+## 1.0.5-WIP
+
+## 1.0.4
+
+- fix: updates to readme
 
 ## 1.0.3
 

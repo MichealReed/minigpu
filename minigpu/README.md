@@ -3,40 +3,42 @@
 
 A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.CPP, and WebGPU via Dawn.
 
-[minigpu.practicalxr.com](https://minigpu.practicalxr.com/)
+Try it: https://minigpu.practicalxr.com/
 
-[pub.dev](https://pub.dev/packages/minigpu)
+Use it: https://pub.dev/packages/minigpu
 
-## Three things to know
+- [x] Windows
+- [x] Linux
+- [x] Mac - Needs testing.
+- [x] Web
+- [x] Android
+- [x] iOS - Needs testing.
 
-1. Dawn can take a while to build, so run with -v to see progress.
-2. This uses dart native assets, you must use the flag on the dev channel `dart --enable-experiment=native-assets` or for flutter must be on the master channel and
-`flutter config --enable-native-assets` is needed once.
-3. The root makefile can be used to regenerate bindings or the web plugin.
+## Three Things to Know
+
+1. Dawn can take a while to build. Run with -v to see progress.
+
+2. This package uses dart native assets.
+For flutter, you must be on the master channel and run flutter config --enable-native-assets.
+For dart, each run must contain the --enable-experiment=native-assets flag.
+
+3. The dart example is located at minigpu/bin/example.dart, the flutter example is located at minigpu/example.
 
 ## Getting Started
 
 ```console
-# clone the repo
-git clone https://github.com/PracticalXR/minigpu.git
+ git clone https://github.com/PracticalXR/minigpu.git
+ dart --enable-experiment=native-assets test
 
-# Try dart
-cd minigpu
-dart --enable-experiment=native-assets bin/example.dart -v
-dart --enable-experiment=native-assets test
+ dart:
+ cd minigpu
+ dart --enable-experiment=native-assets bin/example.dart
 
-# Try flutter
-cd minigpu/example
-flutter config --enable-native-assets
-flutter run -d windows/linux/macos/chrome/...
+ flutter:
+ cd minigpu/example
+ flutter config --enable-native-assets
+ flutter run -d chrome/windows/linux/android/ios
 ```
-
-- [x] Windows
-- [x] Linux
-- [x] Mac
-- [x] Web
-- [x] Android
-- [x] iOS
 
 ## Example
 
