@@ -1,5 +1,11 @@
 # minigpu
 
+## 1.0.3.WIP
+
+## 1.0.2
+
+- new: explicity set supported platforms in pubspec.yaml for pub.dev
+
 ## 1.0.1
 
 - breaking: Uses dart native assets
