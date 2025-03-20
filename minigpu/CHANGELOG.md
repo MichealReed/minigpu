@@ -1,5 +1,9 @@
 # minigpu
 
+## 1.0.9
+
+- fix: prevent using project root on ffi since pub wont see the file
+
 ## 1.0.8
 
 - fix: pub.dev still missing project root file
