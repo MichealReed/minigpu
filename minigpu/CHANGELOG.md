@@ -1,6 +1,15 @@
 # minigpu
 
-## 1.0.6-WIP
+## 1.0.8-WIP
+
+## 1.0.7
+
+- fix: project root file missing
+
+## 1.0.6
+
+- fix: minigpu_ffi must also use flutter in pubspec or pub.dev analysis fails
+- fix: issue with project root finding as package
 
 ## 1.0.5
 
