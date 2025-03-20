@@ -1,8 +1,8 @@
 publish_to: none
 name: minigpu_platform_interface
-description: A web library for minigpu wasm.
-version: 1.0.0
-repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_platform_interface
+description: The platform interface for minigpu. A library to brings multiplatform GPU compute to Dart and Flutter using GPU.cpp and Google Dawn.
+version: 1.0.2
+repository: https://github.com/PracticalXR/minigpu
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -14,7 +14,14 @@ dependencies:
   minigpu_web:
     path: ../minigpu_web
 
-
 dev_dependencies:
   lints: ^4.0.0
   test: ^1.24.0
+
+platforms:
+  windows:
+  android:
+  linux:
+  ios:
+  macos:
+  web:

@@ -1,8 +1,8 @@
 publish_to: none
 name: minigpu_web
-description: A web library for minigpu wasm.
-version: 1.0.0
-repository: https://github.com/MichealReed/minigpu/tree/master/minigpu_web
+description: A web library for minigpu wasm. A library to brings multiplatform GPU compute to Dart and Flutter using GPU.cpp and Google Dawn.
+version: 1.0.2
+repository: https://github.com/PracticalXR/minigpu
 
 #####
 
