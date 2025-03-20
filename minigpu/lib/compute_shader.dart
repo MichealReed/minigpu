@@ -6,7 +6,7 @@ final class ComputeShader {
   ComputeShader(PlatformComputeShader shader) : _shader = shader;
 
   final PlatformComputeShader _shader;
-  Map<String, int> _kernelTags = {};
+  final Map<String, int> _kernelTags = {};
 
   /// Loads a kernel string into the shader.
   void loadKernelString(String kernelString) =>

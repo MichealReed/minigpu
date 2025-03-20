@@ -1,6 +1,9 @@
 # minigpu
 
-## 1.0.3.WIP
+## 1.0.3
+
+- fix: remove flutter from package pubspec.yaml
+- fix: updates to readme
 
 ## 1.0.2
 

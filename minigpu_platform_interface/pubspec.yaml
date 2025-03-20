@@ -5,7 +5,8 @@ version: 1.0.3
 repository: https://github.com/PracticalXR/minigpu
 
 environment:
-  sdk: ">=3.5.0 <4.0.0"
+  sdk: ">=3.6.0 <4.0.0"
+
 # Add regular dependencies here.
 dependencies:
   plugin_platform_interface: ^2.1.8
