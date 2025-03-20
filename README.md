@@ -17,9 +17,11 @@ For dart, each run must contain the --enable-experiment=native-assets flag.
 ```console
  git clone https://github.com/PracticalXR/minigpu.git
  dart --enable-experiment=native-assets test
+
  dart:
  cd minigpu
  dart --enable-experiment=native-assets bin/example.dart
+
  flutter:
  cd minigpu/example
  flutter config --enable-native-assets
