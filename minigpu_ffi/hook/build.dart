@@ -20,8 +20,13 @@ void main(List<String> args) async {
           'webgpu_dawn': 'webgpu_dawn.dart',
         },
         outDir: sourceDir.absolute.uri.resolve('external'));
-    logger.info('Added files: $minigpuLib');
-    logger.info('Added files: $webgpuLib');
+    final assets = <List<dynamic>>[minigpuLib, webgpuLib];
+
+    for (final assetList in assets) {
+      for (CodeAsset asset in assetList) {
+        logger.info('Added file: ${asset.file}');
+      }
+    }
   });
 }
 
