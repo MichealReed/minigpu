@@ -5,11 +5,11 @@ import 'platform_stub/minigpu_platform_stub.dart'
     if (dart.library.js) 'package:minigpu_web/minigpu_web.dart';
 
 abstract class MinigpuPlatform {
-  MinigpuPlatform(); // No automatic assignment
+  MinigpuPlatform();
 
   static MinigpuPlatform? _instance;
 
-  /// Returns the current instance; throws if not yet initialized.
+  /// Returns the current instance; creates if not yet initialized.
   static MinigpuPlatform get instance {
     _instance ??= registeredInstance();
     return _instance!;
