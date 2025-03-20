@@ -19,8 +19,10 @@ Use it: https://pub.dev/packages/minigpu
 1. Dawn can take a while to build. Run with -v to see progress.
 
 2. This package uses dart native assets.
-For flutter, you must be on the master channel and run flutter config --enable-native-assets.
-For dart, each run must contain the --enable-experiment=native-assets flag.
+For flutter, you must be on the master channel and run
+`flutter config --enable-native-assets`
+For dart, each run must contain the
+`--enable-experiment=native-assets` flag.
 
 3. For flutter web, add
 
