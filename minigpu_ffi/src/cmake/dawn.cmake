@@ -80,8 +80,9 @@ if(NOT DAWN_BUILD_FOUND)
   set(DAWN_EMSCRIPTEN_TOOLCHAIN    ${EMSCRIPTEN_DIR} CACHE INTERNAL "Emscripten toolchain" FORCE)
 
   set(DAWN_COMMIT "c8e3e6c79d9adcdd5c36d83220ab060f31335484" CACHE STRING "Dawn commit to checkout" FORCE)
-
-    # Initialize Git and set/update remote.
+  
+  file(MAKE_DIRECTORY ${DAWN_DIR})
+  # Initialize Git and set/update remote.
   execute_process(COMMAND git init
   WORKING_DIRECTORY "${DAWN_DIR}"
   )

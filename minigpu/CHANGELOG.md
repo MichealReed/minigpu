@@ -1,6 +1,12 @@
 # minigpu
 
-## 1.1.1-WIP
+## 1.1.2
+
+- fix: create dawn dir to prevent first run error.
+
+## 1.1.1
+
+- fix: split download command for quiet fail on remote add
 
 ## 1.1.0
 
