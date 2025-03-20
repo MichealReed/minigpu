@@ -79,7 +79,7 @@ if(NOT DAWN_BUILD_FOUND)
   set(TINT_BUILD_CMD_TOOLS         OFF CACHE INTERNAL "Build Tint command line tools" FORCE)
   set(DAWN_EMSCRIPTEN_TOOLCHAIN    ${EMSCRIPTEN_DIR} CACHE INTERNAL "Emscripten toolchain" FORCE)
 
-  set(DAWN_COMMIT "4896946abedb0e88c17ccbd8c5caedfb99ba6928" CACHE STRING "Dawn commit to checkout" FORCE)
+  set(DAWN_COMMIT "c8e3e6c79d9adcdd5c36d83220ab060f31335484" CACHE STRING "Dawn commit to checkout" FORCE)
   # Fetch the Dawn repository if not already present.
   FetchContent_Declare(
     dawn
@@ -90,10 +90,11 @@ if(NOT DAWN_BUILD_FOUND)
     DOWNLOAD_COMMAND
       cd ${DAWN_DIR} &&
       git init &&
-      git remote add origin https://dawn.googlesource.com/dawn || true  &&
+      git remote set-url origin https://dawn.googlesource.com/dawn  &&
       git fetch --no-recurse-submodules origin ${DAWN_COMMIT} &&
       git checkout ${DAWN_COMMIT} &&
-      git config submodule.recurse false
+      git config submodule.recurse false && 
+      git reset --hard ${DAWN_COMMIT}
   )
   FetchContent_MakeAvailable(dawn)
 

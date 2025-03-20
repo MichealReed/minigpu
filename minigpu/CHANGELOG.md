@@ -1,5 +1,9 @@
 # minigpu
 
+## 1.1.0
+
+- fix: dawn git not running properly
+
 ## 1.0.9
 
 - fix: prevent using project root on ffi since pub wont see the file

@@ -1117,10 +1117,16 @@ async function createWasm() {
             return ptr;
           },
   importJsBuffer:(buffer, parentPtr = 0) => {
-        // At the moment, only allow importing unmapped buffers.
-        assert(buffer.mappedState == "unmapped");
-        var bufferPtr = _emwgpuCreateBuffer(parentPtr);
+        // At the moment, we do not allow importing pending buffers.
+        assert(buffer.mapState != "pending");
+        var mapState = buffer.mapState == "mapped" ?
+          3 :
+          1;
+        var bufferPtr = _emwgpuCreateBuffer(parentPtr, mapState);
         WebGPU.Internals.jsObjectInsert(bufferPtr, buffer);
+        if (buffer.mapState == "mapped") {
+          WebGPU.Internals.bufferOnUnmaps[bufferPtr] = [];
+        }
         return bufferPtr;
       },
   importJsCommandBuffer:(obj, parentPtr = 0) => {
@@ -1278,7 +1284,7 @@ async function createWasm() {
         var bytesPerRow = HEAPU32[(((ptr)+(8))>>2)];
         var rowsPerImage = HEAPU32[(((ptr)+(12))>>2)];
         return {
-          "offset": HEAPU32[(((ptr + 4))>>2)] * 0x100000000 + HEAPU32[((ptr)>>2)],
+          "offset": (HEAPU32[(((ptr + 4))>>2)] * 0x100000000 + HEAPU32[((ptr)>>2)]),
           "bytesPerRow": bytesPerRow === 4294967295 ? undefined : bytesPerRow,
           "rowsPerImage": rowsPerImage === 4294967295 ? undefined : rowsPerImage,
         };
@@ -1438,7 +1444,7 @@ async function createWasm() {
           return {
             "format": WebGPU.VertexFormat[
               HEAPU32[(((vaPtr)+(4))>>2)]],
-            "offset": HEAPU32[((((vaPtr + 4))+(8))>>2)] * 0x100000000 + HEAPU32[(((vaPtr)+(8))>>2)],
+            "offset": (HEAPU32[((((vaPtr + 4))+(8))>>2)] * 0x100000000 + HEAPU32[(((vaPtr)+(8))>>2)]),
             "shaderLocation": HEAPU32[(((vaPtr)+(16))>>2)],
           };
         }
@@ -1453,17 +1459,17 @@ async function createWasm() {
   
         function makeVertexBuffer(vbPtr) {
           if (!vbPtr) return undefined;
-          var stepModeInt = HEAPU32[(((vbPtr)+(16))>>2)];
-          var attributeCountInt = HEAPU32[(((vbPtr)+(20))>>2)];
+          var stepModeInt = HEAPU32[(((vbPtr)+(4))>>2)];
+          var attributeCountInt = HEAPU32[(((vbPtr)+(16))>>2)];
           if (stepModeInt === 0 && attributeCountInt === 0) {
             return null;
           }
           return {
-            "arrayStride": HEAPU32[((((vbPtr + 4))+(8))>>2)] * 0x100000000 + HEAPU32[(((vbPtr)+(8))>>2)],
+            "arrayStride": (HEAPU32[((((vbPtr + 4))+(8))>>2)] * 0x100000000 + HEAPU32[(((vbPtr)+(8))>>2)]),
             "stepMode": WebGPU.VertexStepMode[stepModeInt],
             "attributes": makeVertexAttributes(
               attributeCountInt,
-              HEAPU32[(((vbPtr)+(24))>>2)]),
+              HEAPU32[(((vbPtr)+(20))>>2)]),
           };
         }
   
@@ -1472,7 +1478,7 @@ async function createWasm() {
   
           var vbs = [];
           for (var i = 0; i < count; ++i) {
-            vbs.push(makeVertexBuffer(vbArrayPtr + i * 32));
+            vbs.push(makeVertexBuffer(vbArrayPtr + i * 24));
           }
           return vbs;
         }
@@ -1577,16 +1583,15 @@ async function createWasm() {
         setLimitValueU64('maxBufferSize', 96);
         setLimitValueU32('maxVertexAttributes', 104);
         setLimitValueU32('maxVertexBufferArrayStride', 108);
-        setLimitValueU32('maxInterStageShaderComponents', 112);
-        setLimitValueU32('maxInterStageShaderVariables', 116);
-        setLimitValueU32('maxColorAttachments', 120);
-        setLimitValueU32('maxColorAttachmentBytesPerSample', 124);
-        setLimitValueU32('maxComputeWorkgroupStorageSize', 128);
-        setLimitValueU32('maxComputeInvocationsPerWorkgroup', 132);
-        setLimitValueU32('maxComputeWorkgroupSizeX', 136);
-        setLimitValueU32('maxComputeWorkgroupSizeY', 140);
-        setLimitValueU32('maxComputeWorkgroupSizeZ', 144);
-        setLimitValueU32('maxComputeWorkgroupsPerDimension', 148);
+        setLimitValueU32('maxInterStageShaderVariables', 112);
+        setLimitValueU32('maxColorAttachments', 116);
+        setLimitValueU32('maxColorAttachmentBytesPerSample', 120);
+        setLimitValueU32('maxComputeWorkgroupStorageSize', 124);
+        setLimitValueU32('maxComputeInvocationsPerWorkgroup', 128);
+        setLimitValueU32('maxComputeWorkgroupSizeX', 132);
+        setLimitValueU32('maxComputeWorkgroupSizeY', 136);
+        setLimitValueU32('maxComputeWorkgroupSizeZ', 140);
+        setLimitValueU32('maxComputeWorkgroupsPerDimension', 144);
       },
   Int_BufferMapState:{
   unmapped:1,
@@ -1654,6 +1659,7 @@ async function createWasm() {
   15:"clip-distances",
   16:"dual-source-blending",
   17:"subgroups",
+  18:"core-features-and-limits",
   327688:"subgroups-f16",
   327693:"chromium-experimental-unorm16-texture-formats",
   327694:"chromium-experimental-snorm16-texture-formats",
@@ -1684,13 +1690,12 @@ async function createWasm() {
   StorageTextureAccess:["binding-not-used",,"write-only","read-only","read-write"],
   StoreOp:[,"store","discard"],
   SurfaceGetCurrentTextureStatus:{
-  1:"success",
-  2:"timeout",
-  3:"outdated",
-  4:"lost",
-  5:"out-of-memory",
-  6:"device-lost",
-  7:"error",
+  1:"success-optimal",
+  2:"success-suboptimal",
+  3:"timeout",
+  4:"outdated",
+  5:"lost",
+  6:"error",
   },
   TextureAspect:[,"all","stencil-only","depth-only"],
   TextureDimension:[,"1d","2d","3d"],
@@ -1763,6 +1768,7 @@ async function createWasm() {
   'clip-distances':"15",
   'dual-source-blending':"16",
   subgroups:"17",
+  'core-features-and-limits':"18",
   'subgroups-f16':"327688",
   'chromium-experimental-unorm16-texture-formats':"327693",
   'chromium-experimental-snorm16-texture-formats':"327694",
@@ -1811,7 +1817,7 @@ async function createWasm() {
             var limitPart1 = HEAPU32[((ptr)>>2)];
             var limitPart2 = HEAPU32[(((ptr)+(4))>>2)];
             if (limitPart1 != 0xFFFFFFFF || limitPart2 != 0xFFFFFFFF) {
-              requiredLimits[name] = HEAPU32[(((ptr + 4))>>2)] * 0x100000000 + HEAPU32[((ptr)>>2)]
+              requiredLimits[name] = (HEAPU32[(((ptr + 4))>>2)] * 0x100000000 + HEAPU32[((ptr)>>2)])
             }
           }
   
@@ -1836,16 +1842,15 @@ async function createWasm() {
           setLimitU64IfDefined("maxBufferSize", 96);
           setLimitU32IfDefined("maxVertexAttributes", 104);
           setLimitU32IfDefined("maxVertexBufferArrayStride", 108);
-          setLimitU32IfDefined("maxInterStageShaderComponents", 112);
-          setLimitU32IfDefined("maxInterStageShaderVariables", 116);
-          setLimitU32IfDefined("maxColorAttachments", 120);
-          setLimitU32IfDefined("maxColorAttachmentBytesPerSample", 124);
-          setLimitU32IfDefined("maxComputeWorkgroupStorageSize", 128);
-          setLimitU32IfDefined("maxComputeInvocationsPerWorkgroup", 132);
-          setLimitU32IfDefined("maxComputeWorkgroupSizeX", 136);
-          setLimitU32IfDefined("maxComputeWorkgroupSizeY", 140);
-          setLimitU32IfDefined("maxComputeWorkgroupSizeZ", 144);
-          setLimitU32IfDefined("maxComputeWorkgroupsPerDimension", 148);
+          setLimitU32IfDefined("maxInterStageShaderVariables", 112);
+          setLimitU32IfDefined("maxColorAttachments", 116);
+          setLimitU32IfDefined("maxColorAttachmentBytesPerSample", 120);
+          setLimitU32IfDefined("maxComputeWorkgroupStorageSize", 124);
+          setLimitU32IfDefined("maxComputeInvocationsPerWorkgroup", 128);
+          setLimitU32IfDefined("maxComputeWorkgroupSizeX", 132);
+          setLimitU32IfDefined("maxComputeWorkgroupSizeY", 136);
+          setLimitU32IfDefined("maxComputeWorkgroupSizeZ", 140);
+          setLimitU32IfDefined("maxComputeWorkgroupsPerDimension", 144);
           desc["requiredLimits"] = requiredLimits;
         }
   
@@ -2006,7 +2011,7 @@ async function createWasm() {
         "label": WebGPU.makeStringFromOptionalStringView(
           descriptor + 4),
         "usage": HEAPU32[(((descriptor)+(16))>>2)],
-        "size": HEAPU32[((((descriptor + 4))+(24))>>2)] * 0x100000000 + HEAPU32[(((descriptor)+(24))>>2)],
+        "size": (HEAPU32[((((descriptor + 4))+(24))>>2)] * 0x100000000 + HEAPU32[(((descriptor)+(24))>>2)]),
         "mappedAtCreation": mappedAtCreation,
       };
   
@@ -2054,13 +2059,13 @@ async function createWasm() {
       var opts;
       if (options) {
         
-        var featureLevel = HEAPU32[(((options)+(8))>>2)];
+        var featureLevel = HEAPU32[(((options)+(4))>>2)];
         opts = {
           "featureLevel": WebGPU.FeatureLevel[featureLevel],
           "powerPreference": WebGPU.PowerPreference[
-            HEAPU32[(((options)+(12))>>2)]],
+            HEAPU32[(((options)+(8))>>2)]],
           "forceFallbackAdapter":
-            !!(HEAPU32[(((options)+(20))>>2)]),
+            !!(HEAPU32[(((options)+(12))>>2)]),
         };
   
         var nextInChainPtr = HEAPU32[((options)>>2)];
@@ -2152,23 +2157,29 @@ async function createWasm() {
         var messagesPtr = _malloc(totalMessagesSize);
   
         // Allocate and fill out each CompilationMessage.
-        var compilationMessagesPtr = _malloc(72 * compilationInfo.messages.length);
+        var compilationMessagesPtr = _malloc(48 * compilationInfo.messages.length);
+        var utf16sPtr = _malloc(32 * compilationInfo.messages.length);
         for (var i = 0; i < compilationInfo.messages.length; ++i) {
           var compilationMessage = compilationInfo.messages[i];
-          var compilationMessagePtr = compilationMessagesPtr + 72 * i;
+          var compilationMessagePtr = compilationMessagesPtr + 48 * i;
+          var utf16Ptr = utf16sPtr + 32 * i;
   
           // Write out the values to the CompilationMessage.
           WebGPU.setStringView(compilationMessagePtr + 4, messagesPtr, messageLengths[i]);
+          // TODO: Convert JavaScript's UTF-16-code-unit offsets to UTF-8-code-unit offsets.
+          // https://github.com/webgpu-native/webgpu-headers/issues/246
+          HEAPU32[((compilationMessagePtr)>>2)] = utf16Ptr;
           HEAP32[(((compilationMessagePtr)+(12))>>2)] = WebGPU.Int_CompilationMessageType[compilationMessage.type];
           HEAP64[(((compilationMessagePtr)+(16))>>3)] = BigInt(compilationMessage.lineNum);
           HEAP64[(((compilationMessagePtr)+(24))>>3)] = BigInt(compilationMessage.linePos);
           HEAP64[(((compilationMessagePtr)+(32))>>3)] = BigInt(compilationMessage.offset);
           HEAP64[(((compilationMessagePtr)+(40))>>3)] = BigInt(compilationMessage.length);
-          // TODO: Convert JavaScript's UTF-16-code-unit offsets to UTF-8-code-unit offsets.
-          // https://github.com/webgpu-native/webgpu-headers/issues/246
-          HEAP64[(((compilationMessagePtr)+(48))>>3)] = BigInt(compilationMessage.linePos);
-          HEAP64[(((compilationMessagePtr)+(56))>>3)] = BigInt(compilationMessage.offset);
-          HEAP64[(((compilationMessagePtr)+(64))>>3)] = BigInt(compilationMessage.length);
+  
+          HEAPU32[((utf16Ptr)>>2)] = 0;
+          HEAP32[(((utf16Ptr)+(4))>>2)] = 327744;
+          HEAP64[(((utf16Ptr)+(8))>>3)] = BigInt(compilationMessage.linePos);
+          HEAP64[(((utf16Ptr)+(16))>>3)] = BigInt(compilationMessage.offset);
+          HEAP64[(((utf16Ptr)+(24))>>3)] = BigInt(compilationMessage.length);
   
           // Write the string out to the allocated buffer. Note we have to add 1
           // to the length of the string to ensure enough space for the null
@@ -4900,7 +4911,7 @@ async function createWasm() {
             "binding": binding,
             "resource": {
               "buffer": WebGPU.getJsObject(bufferPtr),
-              "offset": HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)],
+              "offset": (HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)]),
               "size": size
             },
           };
@@ -4959,7 +4970,7 @@ async function createWasm() {
           "hasDynamicOffset":
             !!(HEAPU32[(((entryPtr)+(8))>>2)]),
           "minBindingSize":
-            HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)],
+            (HEAPU32[((((entryPtr + 4))+(16))>>2)] * 0x100000000 + HEAPU32[(((entryPtr)+(16))>>2)]),
         };
       }
   
@@ -5575,7 +5586,7 @@ var _emwgpuCreateSurface = (a0) => (_emwgpuCreateSurface = wasmExports['emwgpuCr
 var _emwgpuCreateTexture = (a0) => (_emwgpuCreateTexture = wasmExports['emwgpuCreateTexture'])(a0);
 var _emwgpuCreateTextureView = (a0) => (_emwgpuCreateTextureView = wasmExports['emwgpuCreateTextureView'])(a0);
 var _emwgpuCreateAdapter = (a0) => (_emwgpuCreateAdapter = wasmExports['emwgpuCreateAdapter'])(a0);
-var _emwgpuCreateBuffer = (a0) => (_emwgpuCreateBuffer = wasmExports['emwgpuCreateBuffer'])(a0);
+var _emwgpuCreateBuffer = (a0, a1) => (_emwgpuCreateBuffer = wasmExports['emwgpuCreateBuffer'])(a0, a1);
 var _emwgpuCreateDevice = (a0, a1) => (_emwgpuCreateDevice = wasmExports['emwgpuCreateDevice'])(a0, a1);
 var _emwgpuCreateQueue = (a0) => (_emwgpuCreateQueue = wasmExports['emwgpuCreateQueue'])(a0);
 var _emwgpuCreateShaderModule = (a0) => (_emwgpuCreateShaderModule = wasmExports['emwgpuCreateShaderModule'])(a0);
