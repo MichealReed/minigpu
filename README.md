@@ -14,17 +14,17 @@ For flutter, you must be on the master channel and run flutter config --enable-n
 For dart, each run must contain the --enable-experiment=native-assets flag.
 
 ### 3. The dart example is located at minigpu/bin/example.dart, the flutter example is located at minigpu/example
-
- `git clone https://github.com/PracticalXR/minigpu.git`
- `dart --enable-experiment=native-assets test`
+```console
+ git clone https://github.com/PracticalXR/minigpu.git
+ dart --enable-experiment=native-assets test
  dart:
- `cd minigpu`
- `dart --enable-experiment=native-assets bin/example.dart`
+ cd minigpu
+ dart --enable-experiment=native-assets bin/example.dart
  flutter:
- `cd minigpu/example`
- `flutter config --enable-native-assets`
-  `flutter run -d chrome/windows/linux/android/ios`
-
+ cd minigpu/example
+ flutter config --enable-native-assets
+ flutter run -d chrome/windows/linux/android/ios
+```
 Try it: https://minigpu.practicalxr.com/
 
 Use it: https://pub.dev/packages/minigpu
