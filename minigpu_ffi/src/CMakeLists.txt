@@ -76,8 +76,11 @@ if(NOT EMSCRIPTEN)
     add_executable(minigpu_test ${TEST_SOURCES})
     # For tests, you may also want to expose the test sources in the main target;
     # adjust the following as needed
-    target_link_libraries(minigpu_test PRIVATE gpu ${WEBGPU_DAWN_MONOLITHIC} ${MAIN_LIB})
+    target_link_libraries(minigpu_test PRIVATE gpu)
+    target_link_libraries(minigpu_test PRIVATE ${MAIN_LIB})
+    target_link_libraries(minigpu_test PRIVATE webgpu_dawn)
     target_link_libraries(gpu PRIVATE webgpu_dawn)
+    target_link_libraries(${MAIN_LIB} PRIVATE webgpu_dawn)
 else()
     target_link_libraries(${MAIN_LIB} PRIVATE webgpu_web)
 endif()
@@ -87,20 +90,6 @@ endif()
 
 target_link_libraries(${MAIN_LIB} PRIVATE gpu)
 
-# MSVC Specific: Copy DLL to Runner Folder
-get_filename_component(RUNNER_FOLDER ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
-get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
-get_filename_component(RUNNER_FOLDER ${RUNNER_FOLDER} DIRECTORY)
-set(RUNNER_FOLDER "${RUNNER_FOLDER}/runner")
-
-if(MSVC AND NOT ANDROID)
-    add_custom_command(TARGET ${MAIN_LIB} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${DAWN_BUILD_DIR}/$<CONFIG>/webgpu_dawn.dll
-                ${RUNNER_FOLDER}/$<CONFIG>/webgpu_dawn.dll
-        COMMENT "Copying webgpu_dawn.dll to runner folder"
-    )
-endif()
 
 # EMSCRIPTEN: Copy JS Sources and Build Outputs to WEB_OUTPUT_DIR
 if(EMSCRIPTEN)

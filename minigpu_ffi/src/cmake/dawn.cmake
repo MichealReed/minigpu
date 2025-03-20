@@ -67,7 +67,7 @@ if(NOT DAWN_BUILD_FOUND)
   message(STATUS "Dawn build not found - pre-building Dawn.")
 
   # Force Dawn build options.
-  set(DAWN_ALWAYS_ASSERT           OFF CACHE INTERNAL "Always assert in Dawn" FORCE)
+  set(DAWN_ALWAYS_ASSERT           ON CACHE INTERNAL "Always assert in Dawn" FORCE)
   set(DAWN_BUILD_MONOLITHIC_LIBRARY ON CACHE INTERNAL "Build Dawn monolithically" FORCE)
   set(DAWN_BUILD_EXAMPLES          OFF CACHE INTERNAL "Build Dawn examples" FORCE)
   set(DAWN_BUILD_SAMPLES           OFF CACHE INTERNAL "Build Dawn samples" FORCE)
@@ -79,6 +79,7 @@ if(NOT DAWN_BUILD_FOUND)
   set(TINT_BUILD_CMD_TOOLS         OFF CACHE INTERNAL "Build Tint command line tools" FORCE)
   set(DAWN_EMSCRIPTEN_TOOLCHAIN    ${EMSCRIPTEN_DIR} CACHE INTERNAL "Emscripten toolchain" FORCE)
 
+  set(DAWN_COMMIT "4896946abedb0e88c17ccbd8c5caedfb99ba6928" CACHE STRING "Dawn commit to checkout" FORCE)
   # Fetch the Dawn repository if not already present.
   FetchContent_Declare(
     dawn
@@ -89,8 +90,10 @@ if(NOT DAWN_BUILD_FOUND)
     DOWNLOAD_COMMAND
       cd ${DAWN_DIR} &&
       git init &&
-      git fetch --depth=1 https://dawn.googlesource.com/dawn &&
-      git reset --hard FETCH_HEAD
+      git remote add origin https://dawn.googlesource.com/dawn || true  &&
+      git fetch --no-recurse-submodules origin ${DAWN_COMMIT} &&
+      git checkout ${DAWN_COMMIT} &&
+      git config submodule.recurse false
   )
   FetchContent_MakeAvailable(dawn)
 

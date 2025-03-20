@@ -2,34 +2,20 @@
 
 import 'dart:async';
 import 'dart:ffi';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart';
 import 'package:minigpu_ffi/minigpu_ffi_bindings.dart' as ffi;
 import 'package:minigpu_platform_interface/minigpu_platform_interface.dart';
 
-// Dynamic library
-const String _libName = 'minigpu_ffi';
-
 typedef ReadAsyncCallbackFunc = Void Function(Pointer<Void>);
 typedef ReadAsyncCallback = Pointer<NativeFunction<ReadAsyncCallbackFunc>>;
-final _bindings = ffi.minigpuFfiBindings(() {
-  if (Platform.isMacOS || Platform.isIOS) {
-    return DynamicLibrary.open('$_libName.framework/$_libName');
-  } else if (Platform.isAndroid || Platform.isLinux) {
-    return DynamicLibrary.open('lib$_libName.so');
-  } else if (Platform.isWindows) {
-    return DynamicLibrary.open('$_libName.dll');
-  }
-  throw UnsupportedError('Unsupported platform: ${Platform.operatingSystem}');
-}());
+
+MinigpuPlatform registeredInstance() => MinigpuFfi();
 
 // Minigpu FFI
 class MinigpuFfi extends MinigpuPlatform {
-  MinigpuFfi._();
-
-  static void registerWith() => MinigpuPlatform.instance = MinigpuFfi._();
+  MinigpuFfi();
 
   @override
   Future<void> initializeContext() async {
@@ -42,7 +28,7 @@ class MinigpuFfi extends MinigpuPlatform {
     final nativeCallable =
         NativeCallable<Void Function()>.listener(nativeCallback);
 
-    _bindings.mgpuInitializeContextAsync(nativeCallable.nativeFunction);
+    ffi.mgpuInitializeContextAsync(nativeCallable.nativeFunction);
 
     await completer.future;
     nativeCallable.close();
@@ -50,19 +36,19 @@ class MinigpuFfi extends MinigpuPlatform {
 
   @override
   void destroyContext() {
-    _bindings.mgpuDestroyContext();
+    ffi.mgpuDestroyContext();
   }
 
   @override
   PlatformComputeShader createComputeShader() {
-    final self = _bindings.mgpuCreateComputeShader();
+    final self = ffi.mgpuCreateComputeShader();
     if (self == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return FfiComputeShader(self);
   }
 
   @override
   PlatformBuffer createBuffer(int bufferSize) {
-    final self = _bindings.mgpuCreateBuffer(bufferSize);
+    final self = ffi.mgpuCreateBuffer(bufferSize);
     if (self == nullptr) throw MinigpuPlatformOutOfMemoryException();
     return FfiBuffer(self);
   }
@@ -78,7 +64,7 @@ final class FfiComputeShader implements PlatformComputeShader {
   void loadKernelString(String kernelString) {
     final kernelStringPtr = kernelString.toNativeUtf8();
     try {
-      _bindings.mgpuLoadKernel(_self, kernelStringPtr.cast());
+      ffi.mgpuLoadKernel(_self, kernelStringPtr.cast());
     } finally {
       malloc.free(kernelStringPtr);
     }
@@ -86,13 +72,13 @@ final class FfiComputeShader implements PlatformComputeShader {
 
   @override
   bool hasKernel() {
-    return _bindings.mgpuHasKernel(_self) != 0;
+    return ffi.mgpuHasKernel(_self) != 0;
   }
 
   @override
   void setBuffer(int tag, PlatformBuffer buffer) {
     try {
-      _bindings.mgpuSetBuffer(_self, tag, (buffer as FfiBuffer)._self);
+      ffi.mgpuSetBuffer(_self, tag, (buffer as FfiBuffer)._self);
     } finally {}
   }
 
@@ -107,7 +93,7 @@ final class FfiComputeShader implements PlatformComputeShader {
 
       final nativeCallable =
           NativeCallable<Void Function()>.listener(nativeCallback);
-      _bindings.mgpuDispatchAsync(
+      ffi.mgpuDispatchAsync(
           _self, groupsX, groupsY, groupsZ, nativeCallable.nativeFunction);
       await completer.future;
       nativeCallable.close();
@@ -116,7 +102,7 @@ final class FfiComputeShader implements PlatformComputeShader {
 
   @override
   void destroy() {
-    _bindings.mgpuDestroyComputeShader(_self);
+    ffi.mgpuDestroyComputeShader(_self);
   }
 }
 
@@ -167,8 +153,8 @@ final class FfiBuffer implements PlatformBuffer {
         NativeCallable<Void Function()>.listener(nativeCallback);
 
     // Call the asynchronous native function.
-    // _self is your MGPUBuffer pointer; _bindings.mgpuReadBufferAsync was set up from the FFI lookup.
-    _bindings.mgpuReadBufferAsync(
+    // _self is your MGPUBuffer pointer; ffi.mgpuReadBufferAsync was set up from the FFI lookup.
+    ffi.mgpuReadBufferAsync(
       _self,
       outputPtr,
       byteSize,
@@ -197,13 +183,12 @@ final class FfiBuffer implements PlatformBuffer {
     final inputPtr = malloc.allocate<Float>(elementCount * sizeOf<Float>());
     final inputTypedList = inputPtr.asTypedList(elementCount);
     inputTypedList.setAll(0, inputData);
-    _bindings.mgpuSetBufferData(
-        _self, inputPtr, elementCount * sizeOf<Float>());
+    ffi.mgpuSetBufferData(_self, inputPtr, elementCount * sizeOf<Float>());
     malloc.free(inputPtr);
   }
 
   @override
   void destroy() {
-    _bindings.mgpuDestroyBuffer(_self);
+    ffi.mgpuDestroyBuffer(_self);
   }
 }

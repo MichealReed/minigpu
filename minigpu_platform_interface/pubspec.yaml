@@ -9,6 +9,11 @@ environment:
 # Add regular dependencies here.
 dependencies:
   plugin_platform_interface: ^2.1.8
+  minigpu_ffi:
+    path: ../minigpu_ffi
+  minigpu_web:
+    path: ../minigpu_web
+
 
 dev_dependencies:
   lints: ^4.0.0

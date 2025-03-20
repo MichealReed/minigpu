@@ -46,6 +46,10 @@ void ComputeShader::dispatch(int groupsX, int groupsY, int groupsZ) {
   // create array of view offsets for tensor, size_t all 0
   std::vector<size_t> viewOffsets(bindings.size(), 0);
 
+  LOG(kDefLog, kInfo,
+      "Dispatching kernel with groups: (%d, %d, %d) and bindings size: %zu",
+      groupsX, groupsY, groupsZ, bindings.size());
+
   Kernel kernel =
       createKernel(mgpu.getContext(), code, bindings.data(), bindings.size(),
                    viewOffsets.data(),

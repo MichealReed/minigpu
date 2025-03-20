@@ -1,6 +1,6 @@
 import "dart:io";
 import "package:flutter/services.dart";
-import "package:minigpu/minigpu.dart";
+import "package:minigpu/compute_shader.dart";
 
 extension LoadKernels on ComputeShader {
   /// Loads a kernel from an asset file.

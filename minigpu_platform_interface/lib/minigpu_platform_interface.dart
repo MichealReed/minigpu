@@ -1,20 +1,22 @@
 import 'dart:typed_data';
 
-import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'platform_stub/minigpu_platform_stub.dart'
+    if (dart.library.ffi) 'package:minigpu_ffi/minigpu_ffi.dart'
+    if (dart.library.js) 'package:minigpu_web/minigpu_web.dart';
 
-abstract class MinigpuPlatform extends PlatformInterface {
-  MinigpuPlatform() : super(token: _token);
+abstract class MinigpuPlatform {
+  MinigpuPlatform();
 
-  static final Object _token = Object();
+  static MinigpuPlatform? _instance;
 
-  static late MinigpuPlatform _instance;
-
-  static MinigpuPlatform get instance => _instance;
-
-  static set instance(MinigpuPlatform instance) {
-    PlatformInterface.verifyToken(instance, _token);
-    _instance = instance;
+  /// Returns the current instance; creates if not yet initialized.
+  static MinigpuPlatform get instance {
+    _instance ??= registeredInstance();
+    return _instance!;
   }
+
+  MinigpuPlatform registerInstance() =>
+      throw UnimplementedError('No platform implementation available.');
 
   Future<void> initializeContext();
   void destroyContext();
