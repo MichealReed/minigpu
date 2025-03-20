@@ -14,7 +14,7 @@ dependencies:
   ffi: ^2.0.2
   minigpu_platform_interface:
     path: ../minigpu_platform_interface
-  native_toolchain_cmake: ^0.0.3
+  native_toolchain_cmake: ^0.0.4
 
 dev_dependencies:
   flutter_lints: ^2.0.1
