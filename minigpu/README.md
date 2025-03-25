@@ -3,9 +3,11 @@
 
 A Flutter library for cross-platform GPU compute shaders integrating WGSL, GPU.CPP, and WebGPU via Dawn.
 
-Try it: https://minigpu.practicalxr.com/
+Try it: [https://minigpu.practicalxr.com/](https://minigpu.practicalxr.com/)
 
-Use it: https://pub.dev/packages/minigpu
+Use it: [https://pub.dev/packages/minigpu](https://pub.dev/packages/minigpu)
+
+Tensor package: [https://pub.dev/packages/gpu_tensor](https://pub.dev/packages/gpu_tensor)
 
 - [x] Windows
 - [x] Linux
@@ -34,6 +36,21 @@ For dart, each run must contain the
 ```
 
 to your web/index.html file.
+
+### Installation
+
+Add the following to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  minigpu: ^1.1.3
+```
+
+Then run:
+
+```shell
+dart pub get
+```
 
 ## Getting Started
 
@@ -121,3 +138,7 @@ fn main(
   });
 }
   ```
+
+## Funding
+
+  If you are interested in funding further easy-to-port gpu development, please submit an inquiry on [https://practicalxr.com](https://practicalxr.com).

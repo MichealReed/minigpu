@@ -78,7 +78,7 @@ class Tensor {
     if (other.size != size) {
       throw Exception("Tensor sizes do not match for elementwise addition");
     }
-    Tensor result = await Tensor.create(shape, gpu: gpu);
+    Tensor result = await Tensor.create(shape);
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
@@ -107,7 +107,7 @@ C[i] = A[i] + B[i];
     if (other.size != size) {
       throw Exception("Tensor sizes do not match for elementwise subtraction");
     }
-    Tensor result = await Tensor.create(shape, gpu: gpu);
+    Tensor result = await Tensor.create(shape);
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
@@ -131,20 +131,27 @@ C[i] = A[i] - B[i];
     return result;
   }
 
-  /// Reshapes the tensor into a new shape without changing the underlying data.
-  /// Throws an exception if the total number of elements would differ.
-  Tensor reshape(List<int> newShape) {
-    int newSize = newShape.reduce((a, b) => a * b);
-    if (newSize != size) {
-      throw Exception(
-          "New shape $newShape does not match total number of elements $size");
+  /// Operator overloads for more natural syntax.
+  Future<Tensor> operator +(dynamic other) async {
+    if (other is num) {
+      return addScalar(other.toDouble());
+    } else if (other is Tensor) {
+      return add(other);
+    } else {
+      throw Exception("Unsupported operand type for +");
     }
-    return Tensor.fromBuffer(buffer, newShape, gpu: gpu);
   }
 
-  /// Operator overloads for more natural syntax.
-  Future<Tensor> operator +(Tensor other) => add(other);
-  Future<Tensor> operator -(Tensor other) => subtract(other);
+  Future<Tensor> operator -(dynamic other) async {
+    if (other is num) {
+      return subtractScalar(other.toDouble());
+    } else if (other is Tensor) {
+      return subtract(other);
+    } else {
+      throw Exception("Unsupported operand type for -");
+    }
+  }
+
   Future<Tensor> operator *(dynamic other) async {
     if (other is num) {
       return multiplyScalar(other.toDouble());
@@ -155,40 +162,14 @@ C[i] = A[i] - B[i];
     }
   }
 
-  /// Transposes a 2D tensor.
-  /// Assumes the tensor’s shape is [m, n] with data stored in row-major order.
-  Future<Tensor> transpose() async {
-    if (shape.length != 2) {
-      throw Exception("Transpose is only implemented for 2D tensors.");
+  Future<Tensor> operator /(dynamic other) async {
+    if (other is num) {
+      return divideScalar(other.toDouble());
+    } else if (other is Tensor) {
+      return divide(other);
+    } else {
+      throw Exception("Unsupported operand type for /");
     }
-    int m = shape[0], n = shape[1];
-    Tensor result = await Tensor.create([n, m], gpu: gpu);
-
-    final String shaderCode = '''
-@group(0) @binding(0) var<storage, read_write> input: array<f32>;
-@group(0) @binding(1) var<storage, read_write> output: array<f32>;
-
-@compute @workgroup_size(16,16,1)
-fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
-  let row: u32 = gid.x;
-  let col: u32 = gid.y;
-  if (row < ${m}u && col < ${n}u) {
-    // Corrected transposition for complex numbers.
-    output[(col * ${m}u + row) * 2u] = input[(row * ${n}u + col) * 2u];
-    output[(col * ${m}u + row) * 2u + 1u] = input[(row * ${n}u + col) * 2u + 1u];
-  }
-}
-''';
-    final ComputeShader shader = gpu.createComputeShader();
-    shader.loadKernelString(shaderCode);
-    shader.setBuffer("input", buffer);
-    shader.setBuffer("output", result.buffer);
-    int wgX = (m + 15) ~/ 16;
-    int wgY = (n + 15) ~/ 16;
-    await shader.dispatch(wgX, wgY, 1);
-    shader.destroy();
-
-    return result;
   }
 
   /// Elementwise multiplication (Hadamard product).
@@ -197,7 +178,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
       throw Exception(
           "Tensor sizes do not match for elementwise multiplication");
     }
-    Tensor result = await Tensor.create(shape, gpu: gpu);
+    Tensor result = await Tensor.create(shape);
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
@@ -221,9 +202,57 @@ C[i] = A[i] * B[i];
     return result;
   }
 
+  /// Adds a scalar value to every element in the tensor.
+  Future<Tensor> addScalar(double scalar) async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = A[i] + $scalar;
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Subtracts a scalar value from every element in the tensor.
+  Future<Tensor> subtractScalar(double scalar) async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = A[i] - $scalar;
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
   /// Multiplies every element in the tensor by a scalar value.
   Future<Tensor> multiplyScalar(double scalar) async {
-    Tensor result = await Tensor.create(shape, gpu: gpu);
+    Tensor result = await Tensor.create(shape);
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
@@ -254,7 +283,7 @@ B[i] = A[i] * $scalar;
     return true;
   }
 
-  /// Matrix multiplication (dot product) for rank-2 tensors.
+  /// Matrix multiplication (dot product)
   /// Assumes this tensor has shape [m, n] and [other] has shape [n, p].
   Future<Tensor> matMul(Tensor other) async {
 // Both tensors must have rank at least 2.
@@ -272,7 +301,7 @@ B[i] = A[i] * $scalar;
       }
       int p = other.shape[1];
       // The result has shape [m, p].
-      Tensor result = await Tensor.create([m, p], gpu: gpu);
+      Tensor result = await Tensor.create([m, p]);
 
       final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
@@ -324,7 +353,7 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
 // The result shape is [batchShape, m, p]
       List<int> resultShape = List.from(batchShapeA)..addAll([m, p]);
-      Tensor result = await Tensor.create(resultShape, gpu: gpu);
+      Tensor result = await Tensor.create(resultShape);
 
 // Use a shader aware of the batch dimension (using 3D dispatch):
       final shaderCode = '''
@@ -364,5 +393,347 @@ C[indexC] = sum;
       shader.destroy();
       return result;
     }
+  }
+
+  /// Elementwise division (A / B).
+  Future<Tensor> divide(Tensor other) async {
+    if (other.size != size) {
+      throw Exception("Tensor sizes do not match for elementwise division");
+    }
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@group(0) @binding(2) var<storage, read_write> C: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    C[i] = A[i] / B[i];
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', other.buffer);
+    shader.setBuffer('C', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Divides every element in the tensor by a scalar.
+  Future<Tensor> divideScalar(double scalar) async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = A[i] / $scalar;
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Raises every element in the tensor to the power of [exponent].
+  Future<Tensor> powScalar(double exponent) async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = pow(A[i], $exponent);
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Computes the natural logarithm (ln) of each element.
+  Future<Tensor> log() async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = log(A[i]);
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Computes the exponential (e^x) of each element.
+  Future<Tensor> exp() async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = exp(A[i]);
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Computes the square root of each element.
+  Future<Tensor> sqrt() async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = sqrt(A[i]);
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Computes the modulus (remainder) of each element by [divisor].
+  Future<Tensor> modScalar(double divisor) async {
+    // Ensure the divisor is expressed as a float literal (e.g. "3.0")
+    String divisorLiteral = divisor.toStringAsFixed(1);
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = A[i] % $divisorLiteral;
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise "greater than" comparison.
+  /// Returns a tensor where each element is 1.0 if A[i] > other[i], otherwise 0.0.
+  Future<Tensor> greaterThan(Tensor other) async {
+    if (other.size != size) {
+      throw Exception("Tensor sizes do not match for elementwise comparison");
+    }
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@group(0) @binding(2) var<storage, read_write> C: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    if (A[i] > B[i]) {
+      C[i] = 1.0;
+    } else {
+      C[i] = 0.0;
+    }
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', other.buffer);
+    shader.setBuffer('C', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise "less than" comparison.
+  /// Returns a tensor where each element is 1.0 if A[i] < other[i], otherwise 0.0.
+  Future<Tensor> lessThan(Tensor other) async {
+    if (other.size != size) {
+      throw Exception("Tensor sizes do not match for elementwise comparison");
+    }
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@group(0) @binding(2) var<storage, read_write> C: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    if (A[i] < B[i]) {
+      C[i] = 1.0;
+    } else {
+      C[i] = 0.0;
+    }
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', other.buffer);
+    shader.setBuffer('C', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise equality comparison.
+  /// Returns a tensor where each element is 1.0 if A[i] equals other[i], otherwise 0.0.
+  Future<Tensor> equalTo(Tensor other) async {
+    if (other.size != size) {
+      throw Exception("Tensor sizes do not match for elementwise comparison");
+    }
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@group(0) @binding(2) var<storage, read_write> C: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    if (A[i] == B[i]) {
+      C[i] = 1.0;
+    } else {
+      C[i] = 0.0;
+    }
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', other.buffer);
+    shader.setBuffer('C', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise "not equal" comparison.
+  /// Returns a tensor where each element is 1.0 if A[i] != other[i], otherwise 0.0.
+  Future<Tensor> notEqualTo(Tensor other) async {
+    // Implement by reusing equalTo and then subtracting from a tensor of ones.
+    Tensor eq = await equalTo(other);
+    Tensor ones = await Tensor.create(shape);
+    // Fill 'ones' with 1.0.
+    ones = await ones.addScalar(1.0);
+    // ones - eq gives 1.0 for not equal cases.
+    Tensor result = await ones.subtract(eq);
+    eq.destroy();
+    ones.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise "greater than or equal to" comparison.
+  /// Returns a tensor with 1.0 if A[i] >= other[i], otherwise 0.0.
+  Future<Tensor> greaterThanOrEqual(Tensor other) async {
+    // A >= B is equivalent to NOT (A < B)
+    Tensor lt = await lessThan(other);
+    Tensor ones = await Tensor.create(shape);
+    ones = await ones.addScalar(1.0);
+    Tensor result = await ones.subtract(lt);
+    lt.destroy();
+    ones.destroy();
+    return result;
+  }
+
+  /// Performs an elementwise "less than or equal to" comparison.
+  /// Returns a tensor with 1.0 if A[i] <= other[i], otherwise 0.0.
+  Future<Tensor> lessThanOrEqual(Tensor other) async {
+    // A <= B is equivalent to NOT (A > B)
+    Tensor gt = await greaterThan(other);
+    Tensor ones = await Tensor.create(shape);
+    ones = await ones.addScalar(1.0);
+    Tensor result = await ones.subtract(gt);
+    gt.destroy();
+    ones.destroy();
+    return result;
+  }
+
+  /// Computes the absolute value of each element.
+  Future<Tensor> abs() async {
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    B[i] = abs(A[i]);
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', result.buffer);
+    int wk = (size + 255) ~/ 256;
+    await shader.dispatch(wk, 1, 1);
+    shader.destroy();
+    return result;
   }
 }

@@ -2,9 +2,6 @@ import 'dart:typed_data';
 import 'package:gpu_tensor/gpu_tensor.dart';
 
 Future<void> main() async {
-  // ---------------------------
-  // Basic tensor arithmetic demo:
-  // ---------------------------
   // Create a 3x3 tensor (Tensor A) with values 1..9.
   final a = await Tensor.create(
     [3, 3],
@@ -62,10 +59,21 @@ Future<void> main() async {
   final reshapedData = await reshaped.getData();
   print("Reshaped matrix multiplication result: $reshapedData");
 
+  // getElement, head, tail
+  // Get an element from Tensor A (for a 3x3 matrix, element at indices [1,2] should be 6).
+  final elementA = await a.getElement([1, 2]);
+  print("Element at [1,2] in Tensor A: $elementA");
+
+  // Use head() helper to get the first 2 rows and 2 columns of Tensor A.
+  final headA = await a.head([2, 2]);
+  print("Head of Tensor A (first 2 rows, 2 cols): $headA");
+
+  // Use tail() helper to get the last 2 rows and 2 columns of Tensor A.
+  final tailA = await a.tail([2, 2]);
+  print("Tail of Tensor A (last 2 rows, 2 cols): $tailA");
+
   // FFT demo (1D FFT)
   // Create a real 1D tensor with 8 points.
-  // The fft1d() function detects that the tensor is real (shape [8])
-  // before performing the FFT.
   const int points1D = 8;
   final Float32List realData1D = Float32List(points1D);
   for (int i = 0; i < points1D; i++) {
@@ -78,8 +86,6 @@ Future<void> main() async {
 
   // FFT demo (2D FFT)
   // Create a real 2D tensor with 4 rows and 4 columns.
-  // The fft2d() method detects its shape [4, 4] and internally converts it
-  // to a complex tensor of shape [4, 4, 2] with imaginary parts set to zero.
   const int rows = 4;
   const int cols = 4;
   final Float32List realData2D = Float32List(rows * cols);
@@ -90,15 +96,4 @@ Future<void> main() async {
   final fft2dResult = await realTensor2D.fft2d();
   final fft2dResultData = await fft2dResult.getData();
   print("FFT 2D result: $fft2dResultData");
-
-  // Cleanup: explicitly destroy all tensors to free GPU resources.
-  a.destroy();
-  b.destroy();
-  added.destroy();
-  subtracted.destroy();
-  scalarMult.destroy();
-  matMulResult.destroy();
-  reshaped.destroy();
-  fft1dResult.destroy();
-  fft2dResult.destroy();
 }
