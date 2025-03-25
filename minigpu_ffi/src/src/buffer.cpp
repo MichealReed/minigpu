@@ -28,7 +28,14 @@ void MGPU::initializeContextAsync(std::function<void()> callback) {
   }
 }
 
-void MGPU::destroyContext() {}
+void MGPU::destroyContext() {
+  if (ctx) {
+    ctx.release();
+    LOG(kDefLog, kInfo, "GPU context destroyed successfully.");
+  } else {
+    LOG(kDefLog, kError, "GPU context is already destroyed or not initialized.");
+  }
+}
 
 Buffer::Buffer(MGPU &mgpu) : mgpu(mgpu) {
   bufferData.buffer = nullptr;

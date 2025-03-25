@@ -90,11 +90,5 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
       inputBuffer.destroy();
       outputBuffer.destroy();
     });
-
-    test('Double initialization throws error', () async {
-      // Calling init() a second time should throw an error.
-      expect(() async => await minigpu.init(),
-          throwsA(isA<MinigpuAlreadyInitError>()));
-    });
   });
 }

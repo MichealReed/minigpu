@@ -79,7 +79,7 @@ if(NOT DAWN_BUILD_FOUND)
   set(TINT_BUILD_CMD_TOOLS         OFF CACHE INTERNAL "Build Tint command line tools" FORCE)
   set(DAWN_EMSCRIPTEN_TOOLCHAIN    ${EMSCRIPTEN_DIR} CACHE INTERNAL "Emscripten toolchain" FORCE)
 
-  set(DAWN_COMMIT "c8e3e6c79d9adcdd5c36d83220ab060f31335484" CACHE STRING "Dawn commit to checkout" FORCE)
+  set(DAWN_COMMIT "66d57f910357befb441b91162f29a97f687af6d9" CACHE STRING "Dawn commit to checkout" FORCE)
   
   file(MAKE_DIRECTORY ${DAWN_DIR})
   # Initialize Git and set/update remote.
@@ -92,15 +92,11 @@ if(NOT DAWN_BUILD_FOUND)
   )
   # Fetch and checkout the specified commit.
   execute_process(
-  COMMAND git fetch --no-recurse-submodules origin ${DAWN_COMMIT}
+  COMMAND git fetch origin ${DAWN_COMMIT}
   WORKING_DIRECTORY "${DAWN_DIR}"
   )
   execute_process(
   COMMAND git checkout ${DAWN_COMMIT}
-  WORKING_DIRECTORY "${DAWN_DIR}"
-  )
-  execute_process(
-  COMMAND git config submodule.recurse false
   WORKING_DIRECTORY "${DAWN_DIR}"
   )
   execute_process(
