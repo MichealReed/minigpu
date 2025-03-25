@@ -69,17 +69,15 @@ void Buffer::readSync(void *outputData, size_t size, size_t offset) {
 
   LOG(kDefLog, kInfo, "readSync: Reading %zu bytes from buffer", size);
 
-  gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}};
+  gpu::Tensor tensor{bufferData, gpu::Shape{bufferData.size}}; // Shape is not used here.
+  
+  // Instead of copying the whole buffer, copy only the requested number of bytes.
+  gpu::toCPU(this->mgpu.getContext(), tensor, outputData, size, offset);
 
-  // Perform the copy from GPU to CPU.
-  gpu::toCPU(this->mgpu.getContext(), tensor, outputData, bufferData.size,
-             offset);
-
-  // Cast outputData to a float pointer to log some values.
+  // Log the read data for verification.
   float *data = reinterpret_cast<float *>(outputData);
   size_t numFloats = size / sizeof(float);
   if (numFloats > 0) {
-    // log all floats in single concatenated string
     std::string floatString = "readSync: Floats: ";
     for (size_t i = 0; i < numFloats; i++) {
       floatString += std::to_string(data[i]);
@@ -91,7 +89,6 @@ void Buffer::readSync(void *outputData, size_t size, size_t offset) {
   } else {
     LOG(kDefLog, kInfo, "readSync: Not enough data to display float values");
   }
-
 }
 
 void Buffer::readAsync(void *outputData, size_t size, size_t offset,
