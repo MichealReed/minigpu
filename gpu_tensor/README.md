@@ -13,13 +13,13 @@ GPU Tensor is a Dart package for performing tensor operations leveraging GPU acc
 
 ## Features
 
+- **GPU-Accelerated:** Implemented using the minigpu package which compiles and uses webgpu for shader execution.
 - **Elementwise Operations:** Easily add, subtract, and multiply tensors.
 - **Matrix Multiplication:** Perform dot product operations between two tensors.
-- **Fast Fourier Transforms:** Support for both 1D and 2D FFT operations.
 - **Slicing and Reshaping:** Access specific elements or reshape tensors as needed.
-- **Formatted Output:** Use `head()` and `tail()` methods to view tensor data in a structured format.
-- **Activation Functions:** Apply ReLU and Sigmoid functions to tensors.
-- **GPU-Accelerated:** Implemented using the minigpu package which compiles and uses webgpu for shader execution.
+- **Transforms:** Support for both 1D and 2D FFT operations.
+- **Activation Functions:** Relu, Sigmoid,  Sin, Cos, Tanh, and Softmax.
+
 
 **Missing something important?** Open an issue please, PRs are welcome too! You can also create an extension on Tensor in your own code.
 
