@@ -103,6 +103,47 @@ extension TensorData on Tensor {
     return elementData[0];
   }
 
+  /// Sets the value of the tensor element at the given [indices] to [value].
+  /// Throws an exception if the [indices] length does not match the tensor rank
+  /// or if any index is out of bounds.
+  Future<void> setElement(List<int> indices, double value) async {
+    if (indices.length != shape.length) {
+      throw Exception(
+          "Indices length (${indices.length}) does not match tensor rank (${shape.length}).");
+    }
+    // Calculate strides for the tensor (assumes row-major order).
+    List<int> strides = List.filled(shape.length, 1);
+    for (int i = shape.length - 2; i >= 0; i--) {
+      strides[i] = strides[i + 1] * shape[i + 1];
+    }
+    // Compute the flat offset from multi-dimensional indices.
+    int flatIndex = 0;
+    for (int i = 0; i < shape.length; i++) {
+      if (indices[i] < 0 || indices[i] >= shape[i]) {
+        throw Exception(
+            "Index out of bounds for dimension $i: ${indices[i]} not in [0, ${shape[i] - 1}].");
+      }
+      flatIndex += indices[i] * strides[i];
+    }
+
+    // Create a compute shader that writes the given value at the computed flat index.
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+  
+@compute @workgroup_size(1)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  A[${flatIndex}u] = $value;
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    // IMPORTANT: Bind the tensor's GPU buffer to the shader.
+    shader.setBuffer('A', buffer);
+    // Dispatch a single workgroup (1,1,1) to perform the write.
+    await shader.dispatch(1, 1, 1);
+    shader.destroy();
+  }
+
   /// Reshapes the tensor into a new shape without changing the underlying data.
   /// Throws an exception if the total number of elements would differ.
   Tensor reshape(List<int> newShape) {
@@ -209,111 +250,5 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     shader.destroy();
 
     return result;
-  }
-}
-
-extension TensorPrintHelpers on Tensor {
-  /// Returns a string representation of the first [counts] elements along each dimension.
-  /// For 2D tensors, head([r,c]) retrieves the first r rows and c columns using
-  /// separate GPU reads for each row.
-  Future<String> head(List<int> counts) async {
-    if (counts.length != shape.length) {
-      throw Exception(
-          "Counts length (${counts.length}) does not match tensor rank (${shape.length}).");
-    }
-    if (shape.length == 2) {
-      int numRows = counts[0];
-      int numCols = counts[1];
-      int totalCols = shape[1];
-      List<List<double>> rows = [];
-      for (int r = 0; r < numRows; r++) {
-        // Each row is stored contiguously.
-        final rowData = Float32List(numCols);
-        // Compute the flat offset: row start = r*totalCols.
-        await buffer.read(rowData, numCols, readOffset: r * totalCols);
-        rows.add(rowData);
-      }
-      return _format2D(rows);
-    } else {
-      // Fallback for tensor rank != 2, use our existing slice.
-      List<int> startIndices = List.filled(shape.length, 0);
-      Tensor subTensor =
-          await slice(startIndices: startIndices, endIndices: counts);
-      List<double> subData = await subTensor.getData();
-      return _formatTensor(subData, counts);
-    }
-  }
-
-  /// Returns a string representation of the last [counts] elements along each dimension.
-  /// For 2D tensors, tail([r,c]) retrieves the last r rows and last c columns using
-  /// separate GPU reads for each row.
-  Future<String> tail(List<int> counts) async {
-    if (counts.length != shape.length) {
-      throw Exception(
-          "Counts length (${counts.length}) does not match tensor rank (${shape.length}).");
-    }
-    if (shape.length == 2) {
-      int numRows = counts[0];
-      int numCols = counts[1];
-      int totalCols = shape[1];
-      int startRow = shape[0] - numRows;
-      int startCol = totalCols - numCols;
-      List<List<double>> rows = [];
-      for (int r = startRow; r < shape[0]; r++) {
-        final rowData = Float32List(numCols);
-        // Each row starts at r*totalCols and we read starting from the last numCols.
-        await buffer.read(rowData, numCols,
-            readOffset: r * totalCols + startCol);
-        rows.add(rowData);
-      }
-      return _format2D(rows);
-    } else {
-      // Fallback for tensor rank != 2 using our slice() methods.
-      List<int> startIndices = [];
-      for (int i = 0; i < shape.length; i++) {
-        if (counts[i] > shape[i]) {
-          throw Exception(
-              "Tail count (${counts[i]}) exceeds tensor dimension $i size (${shape[i]}).");
-        }
-        startIndices.add(shape[i] - counts[i]);
-      }
-      Tensor subTensor = await slice(
-          startIndices: startIndices,
-          endIndices: shape
-              .asMap()
-              .entries
-              .map((e) => e.value)
-              .toList()); // endIndices equals the full dimensions.
-      subTensor = await subTensor.slice(
-        startIndices: List.filled(counts.length, 0),
-        endIndices: counts,
-      );
-      List<double> subData = await subTensor.getData();
-      return _formatTensor(subData, counts);
-    }
-  }
-
-  /// Helper for formatting a 2D array.
-  String _format2D(List<List<double>> rows) {
-    List<String> rowStrings = rows.map((row) => row.toString()).toList();
-    return "[${rowStrings.join(", ")}]";
-  }
-
-  /// Helper that formats a flat [data] list into a nested array string given the [newShape].
-  String _formatTensor(List<double> data, List<int> newShape) {
-    if (newShape.length == 1) {
-      return data.toString();
-    } else {
-      int subTensorSize = newShape.sublist(1).reduce((a, b) => a * b);
-      List<String> parts = [];
-      for (int i = 0; i < newShape[0]; i++) {
-        int startIdx = i * subTensorSize;
-        int endIdx = startIdx + subTensorSize;
-        List<double> subData = data.sublist(startIdx, endIdx);
-        String subStr = _formatTensor(subData, newShape.sublist(1));
-        parts.add(subStr);
-      }
-      return "[${parts.join(", ")}]";
-    }
   }
 }

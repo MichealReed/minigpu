@@ -93,6 +93,16 @@ C[i] = A[i] - B[i];
     }
   }
 
+  Future<Tensor> operator %(dynamic other) async {
+    if (other is num) {
+      return modScalar(other.toDouble());
+    } else if (other is Tensor) {
+      return mod(other);
+    } else {
+      throw Exception("Unsupported operand type for %");
+    }
+  }
+
   Future<Tensor> operator /(dynamic other) async {
     if (other is num) {
       return divideScalar(other.toDouble());
@@ -374,6 +384,35 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     shader.loadKernelString(shaderCode);
     shader.setBuffer('A', buffer);
     shader.setBuffer('B', result.buffer);
+    int workgroups = (size + 255) ~/ 256;
+    await shader.dispatch(workgroups, 1, 1);
+    shader.destroy();
+    return result;
+  }
+
+  /// Elementwise modulus for two tensors.
+  Future<Tensor> mod(Tensor other) async {
+    if (other.size != size) {
+      throw Exception("Tensor sizes do not match for elementwise modulus");
+    }
+    Tensor result = await Tensor.create(shape);
+    final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> A: array<f32>;
+@group(0) @binding(1) var<storage, read_write> B: array<f32>;
+@group(0) @binding(2) var<storage, read_write> C: array<f32>;
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let i: u32 = gid.x;
+  if (i < ${size}u) {
+    C[i] = A[i] % B[i];
+  }
+}
+''';
+    final ComputeShader shader = gpu.createComputeShader();
+    shader.loadKernelString(shaderCode);
+    shader.setBuffer('A', buffer);
+    shader.setBuffer('B', other.buffer);
+    shader.setBuffer('C', result.buffer);
     int workgroups = (size + 255) ~/ 256;
     await shader.dispatch(workgroups, 1, 1);
     shader.destroy();

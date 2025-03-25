@@ -1,10 +1,9 @@
-import 'dart:typed_data';
 import 'package:minigpu/minigpu.dart';
 
 import 'gpu_tensor_base.dart';
 
 extension TensorLinearOperator on Tensor {
-  // A helper (you might substitute a proper list comparison if not in Flutter)
+  /// helper function to check if two batch shapes are equal
   bool _batchShapesEqual(List<int> shapeA, List<int> shapeB) {
     if (shapeA.length != shapeB.length) return false;
     for (int i = 0; i < shapeA.length; i++) {
@@ -14,7 +13,7 @@ extension TensorLinearOperator on Tensor {
   }
 
   /// Matrix multiplication (dot product)
-  /// Assumes this tensor has shape [m, n] and [other] has shape [n, p].
+  /// for 2D tensors or batched matrix multiplication for higher dimensions.
   Future<Tensor> matMul(Tensor other) async {
 // Both tensors must have rank at least 2.
     if (rank < 2 || other.rank < 2) {
@@ -122,6 +121,133 @@ C[indexC] = sum;
       await shader.dispatch(wgX, wgY, wgZ);
       shader.destroy();
       return result;
+    }
+  }
+
+  /// Performs a convolution supporting dilation and multi-channel input.
+  ///
+  /// For a single-channel (2D) input with a 2D kernel, this falls back to the
+  /// original conv2d implementation. For multi-channel inputs:
+  /// - The input tensor shape must be [H, W, Cin].
+  /// - The kernel tensor shape must be [kH, kW, Cin, Cout].
+  /// - The output shape is computed as:
+  ///   [floor((H + 2*padH - dilationH*(kH-1) - 1)/strideH)+1,
+  ///    floor((W + 2*padW - dilationW*(kW-1) - 1)/strideW)+1, Cout].
+  /// Note: This convolution implementation assumes that multi-channel
+  /// input is stored in a planar (channel‑first) format, meaning that all
+  /// values for channel 0 are stored contiguously, followed by all values
+  /// for channel 1, etc.
+
+  Future<Tensor> conv({
+    required Tensor kernel,
+    int strideH = 1,
+    int strideW = 1,
+    int padH = 0,
+    int padW = 0,
+    int dilationH = 1,
+    int dilationW = 1,
+  }) async {
+    // Multi-channel convolution: input rank 3 and kernel rank 4.
+    if (rank == 3 && kernel.rank == 4) {
+      int H = shape[0];
+      int W = shape[1];
+      int Cin = shape[2];
+      int kH = kernel.shape[0];
+      int kW = kernel.shape[1];
+      int kernelCin = kernel.shape[2];
+      int Cout = kernel.shape[3];
+
+      if (Cin != kernelCin) {
+        throw Exception(
+            "Input channels ($Cin) do not match kernel channels ($kernelCin).");
+      }
+      // Effective kernel size after dilation.
+      int eff_kH = dilationH * (kH - 1) + 1;
+      int eff_kW = dilationW * (kW - 1) + 1;
+      // Compute output dimensions.
+      int outH = ((H + 2 * padH - eff_kH) ~/ strideH) + 1;
+      int outW = ((W + 2 * padW - eff_kW) ~/ strideW) + 1;
+
+      // Create output tensor with shape [outH, outW, Cout].
+      Tensor result = await Tensor.create([outH, outW, Cout], gpu: gpu);
+
+      final shaderCode = '''
+@group(0) @binding(0) var<storage, read_write> input: array<f32>;
+@group(0) @binding(1) var<storage, read_write> kernel: array<f32>;
+@group(0) @binding(2) var<storage, read_write> output: array<f32>;
+
+// Input dimensions
+const H: u32 = ${H}u;
+const W: u32 = ${W}u;
+const Cin: u32 = ${Cin}u;
+// Kernel dimensions
+const kH: u32 = ${kH}u;
+const kW: u32 = ${kW}u;
+const Cout: u32 = ${Cout}u;
+// Output dimensions
+const outH: u32 = ${outH}u;
+const outW: u32 = ${outW}u;
+// Convolution parameters
+const sH: u32 = ${strideH}u;
+const sW: u32 = ${strideW}u;
+const pH: i32 = $padH;
+const pW: i32 = $padW;
+const dH: u32 = ${dilationH}u;
+const dW: u32 = ${dilationW}u;
+
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let idx: u32 = gid.x;
+  if (idx >= outH * outW * Cout) {
+    return;
+  }
+  // Decode output indices.
+  let tmp: u32 = idx / Cout;  // flatten [outH, outW]
+  let o_ch: u32 = idx % Cout;
+  let o_row: u32 = tmp / outW;
+  let o_col: u32 = tmp % outW;
+
+  var sum: f32 = 0.0;
+  // Compute starting coordinate in the input.
+  let inRowStart: i32 = i32(o_row * sH) - pH;
+  let inColStart: i32 = i32(o_col * sW) - pW;
+
+  // Loop over the kernel spatial dimensions.
+  for (var i: u32 = 0u; i < kH; i = i + 1u) {
+    for (var j: u32 = 0u; j < kW; j = j + 1u) {
+      // Calculate input coordinate considering dilation.
+      let inRow: i32 = inRowStart + i32(i * dH);
+      let inCol: i32 = inColStart + i32(j * dW);
+      for (var c: u32 = 0u; c < Cin; c = c + 1u) {
+        var inputVal: f32 = 0.0;
+        if (inRow >= 0 && inRow < i32(H) && inCol >= 0 && inCol < i32(W)) {
+          // Use channel-first (planar) ordering.
+          let inputIndex: u32 = c * (H * W) + (u32(inRow) * W + u32(inCol));
+          inputVal = input[inputIndex];
+        }
+        // Kernel index: kernel shape is [kH, kW, Cin, Cout].
+        let kernelIndex: u32 = ((i * kW + j) * Cin + c) * Cout + o_ch;
+        sum = sum + inputVal * kernel[kernelIndex];
+      }
+    }
+  }
+  // Write the result. Output shape is [outH, outW, Cout].
+  let outIndex: u32 = (o_row * outW + o_col) * Cout + o_ch;
+  output[outIndex] = sum;
+}
+''';
+      final ComputeShader shader = gpu.createComputeShader();
+      shader.loadKernelString(shaderCode);
+      shader.setBuffer('input', buffer);
+      shader.setBuffer('kernel', kernel.buffer);
+      shader.setBuffer('output', result.buffer);
+      int workgroups = ((outH * outW * Cout) + 255) ~/ 256;
+      await shader.dispatch(workgroups, 1, 1);
+      shader.destroy();
+      return result;
+    } else {
+      // Fallback: for 2D input and 2D kernel use the existing conv2d.
+      return conv2d(kernel);
     }
   }
 

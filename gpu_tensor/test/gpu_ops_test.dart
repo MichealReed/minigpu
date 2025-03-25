@@ -218,6 +218,22 @@ Future<void> main() async {
       result.destroy();
     });
 
+    test('Operator overload % computes elementwise modulus for two tensors',
+        () async {
+      var shape = [4];
+      var aData = Float32List.fromList([7, 8, 9, 10]);
+      var bData = Float32List.fromList([4, 4, 4, 4]);
+      var tensorA = await Tensor.create(shape, data: aData);
+      var tensorB = await Tensor.create(shape, data: bData);
+      var result = await (tensorA % tensorB);
+      var resultData = await result.getData();
+      // Expected: mod(7,4)=3, mod(8,4)=0, mod(9,4)=1, mod(10,4)=2
+      expect(resultData, equals(Float32List.fromList([3, 0, 1, 2])));
+      tensorA.destroy();
+      tensorB.destroy();
+      result.destroy();
+    });
+
     test('greaterThan returns correct elementwise comparison', () async {
       var shape = [3];
       var aData = Float32List.fromList([1, 3, 5]);

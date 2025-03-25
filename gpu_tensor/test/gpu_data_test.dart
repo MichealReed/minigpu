@@ -117,6 +117,27 @@ void main() {
         expect(value, equals(4.0));
       });
 
+      test('setElement updates the correct element in a 2D tensor', () async {
+        // Create a 2D tensor with shape [2,3] with initial values 0...5.
+        final initialData = Float32List.fromList([0, 1, 2, 3, 4, 5]);
+        Tensor tensor = await Tensor.create([2, 3], data: initialData);
+
+        // Update the element at row 1, col 1 (flat index 4) to the value 99.0.
+        await tensor.setElement([1, 1], 99.0);
+
+        // Retrieve the updated value using getElement.
+        double value = await tensor.getElement([1, 1]);
+        expect(value, equals(99.0));
+
+        // Also, ensure neighboring elements remain unchanged.
+        double unchanged1 = await tensor.getElement([0, 0]);
+        double unchanged2 = await tensor.getElement([1, 2]);
+        expect(unchanged1, equals(0.0));
+        expect(unchanged2, equals(5.0));
+
+        tensor.destroy();
+      });
+
       test('getElement throws error on invalid indices', () async {
         final data = Float32List.fromList([0, 1, 2, 3, 4, 5]);
         Tensor tensor = await Tensor.create([2, 3], data: data);
