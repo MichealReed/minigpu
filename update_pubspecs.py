@@ -83,7 +83,7 @@ def process_pubspec(file_path, new_version, is_release, local_packages):
 
 def main(version, is_release):
     root_dir = os.path.dirname(os.path.abspath(__file__))
-    packages = ["minigpu", "minigpu_platform_interface", "minigpu_ffi", "minigpu_web"]
+    packages = ["minigpu", "minigpu_platform_interface", "minigpu_ffi", "minigpu_web", "gpu_tensor"]
 
     for dir_name in packages:
         pubspec_path = os.path.join(root_dir, dir_name, "pubspec.yaml")

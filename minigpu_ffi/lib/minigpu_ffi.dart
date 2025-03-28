@@ -128,8 +128,7 @@ final class FfiBuffer implements PlatformBuffer {
             ? readBytes ~/ sizeOf<Float>()
             : totalElements - elementOffset);
 
-    // Calculate effective byte offset: if readElements is given we use elementOffset * sizeOf<ffi.Float>(),
-    // otherwise we use the provided byteOffset.
+    // Calculate effective byte offset for the GPU.
     final int effectiveByteOffset =
         readElements != 0 ? elementOffset * sizeOf<Float>() : byteOffset;
 
@@ -142,7 +141,7 @@ final class FfiBuffer implements PlatformBuffer {
     // Create a completer that will be completed when the native callback fires.
     final completer = Completer<void>();
 
-    // This is the native callback, which must match the MGPUCallback signature.
+    // This is the native callback, matching the MGPUCallback signature.
     void nativeCallback() {
       // Signal that the asynchronous native operation completed.
       completer.complete();
@@ -153,7 +152,6 @@ final class FfiBuffer implements PlatformBuffer {
         NativeCallable<Void Function()>.listener(nativeCallback);
 
     // Call the asynchronous native function.
-    // _self is your MGPUBuffer pointer; ffi.mgpuReadBufferAsync was set up from the FFI lookup.
     ffi.mgpuReadBufferAsync(
       _self,
       outputPtr,
@@ -167,8 +165,8 @@ final class FfiBuffer implements PlatformBuffer {
 
     // Convert the native memory to a Dart typed list.
     final List<double> readData = outputPtr.asTypedList(sizeToRead);
-    // Copy the data into the provided outputData starting at elementOffset.
-    outputData.setAll(elementOffset, readData);
+    // Write into the outputData starting at index zero.
+    outputData.setAll(0, readData);
 
     // Free the allocated native memory and close the native callback.
     malloc.free(outputPtr);

@@ -1,5 +1,11 @@
 # minigpu
 
+## 1.1.3-WIP
+
+- breaking: import package instead of buffer and shader separately
+- fix: pubspec repository url
+- adds: tensor package protoype
+
 ## 1.1.2
 
 - fix: create dawn dir to prevent first run error.
