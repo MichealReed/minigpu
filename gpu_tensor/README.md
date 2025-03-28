@@ -20,6 +20,7 @@ GPU Tensor is a Dart package for performing tensor operations leveraging GPU acc
 - **Data Operations** Slice, reshape, getElement, setElement, head, and tail.
 - **Transforms:** .fft() up to 3D.
 - **Activation Functions:** Relu, Sigmoid,  Sin, Cos, Tanh, and Softmax.
+- **Pooling Operations**: Basic implementations of Max and Min pooling.
 - **Formatted Prints** for tensors with head and tail helpers.
 
 

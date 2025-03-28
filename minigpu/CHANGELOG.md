@@ -1,10 +1,13 @@
 # minigpu
 
-## 1.1.3-WIP
+## 1.1.4-WIP
+
+## 1.1.3
 
 - breaking: import package instead of buffer and shader separately
 - fix: pubspec repository url
 - adds: tensor package protoype
+- fix: issue with reading buffer segments fixed
 
 ## 1.1.2
 
