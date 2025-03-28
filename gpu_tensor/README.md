@@ -28,7 +28,7 @@ GPU Tensor is a Dart package for performing tensor operations leveraging GPU acc
 
 ## Three Things to Know
 
-1. Dawn can take a while to build. Run with -v to see progress.
+1. Dawn can take a while to build and our builds need a recent version of CMake. Run with -v to see errors and progress.
 
 2. This package uses dart native assets.
 For flutter, you must be on the master channel and run
