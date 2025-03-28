@@ -16,6 +16,8 @@ Tensor package: [https://pub.dev/packages/gpu_tensor](https://pub.dev/packages/g
 - [x] Android
 - [x] iOS - Needs testing.
 
+**Disclaimer: This library is experimental and supported at will, use in production at your own risk.**
+
 ## Three Things to Know
 
 1. Dawn can take a while to build and our builds need a recent version of CMake. Run with -v to see errors and progress.
