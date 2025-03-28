@@ -589,27 +589,50 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   /// Reduces the tensor by summing values along the last dimension.
   /// For a tensor of shape [..., d], returns a tensor of shape [...].
   Future<Tensor> sum({int axis = -1}) async {
-    if (axis != -1 && axis != shape.length - 1) {
-      throw Exception(
-          "Currently only sum along the last dimension is supported.");
+    int n = shape.length;
+    // Normalize negative axis.
+    if (axis < 0) {
+      axis += n;
     }
-    int d = shape.last;
-    int batch = size ~/ d;
-    List<int> outShape = shape.sublist(0, shape.length - 1);
+    if (axis < 0 || axis >= n) {
+      throw Exception("Axis out of range.");
+    }
+
+    // Compute product of dimensions before the axis (outer) and after (inner).
+    int outer = 1;
+    for (int i = 0; i < axis; i++) {
+      outer *= shape[i];
+    }
+    int d = shape[axis]; // Dimension to reduce.
+    int inner = 1;
+    for (int i = axis + 1; i < n; i++) {
+      inner *= shape[i];
+    }
+    int totalOut = outer * inner;
+
+    // Build output shape by removing the reduced axis.
+    List<int> outShape = List.from(shape)..removeAt(axis);
     Tensor result = await Tensor.create(outShape);
+
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
 
+const d: u32 = ${d}u;
+const inner: u32 = ${inner}u;
+const totalOut: u32 = ${totalOut}u;
+
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let idx: u32 = gid.x;
-  if (idx < ${batch}u) {
-    let d: u32 = ${d}u;
-    let offset: u32 = idx * d;
-    var sum: f32 = A[offset];
-    for (var j: u32 = 1u; j < d; j = j + 1u) {
-      sum = sum + A[offset + j];
+  if (idx < totalOut) {
+    let outer: u32 = idx / inner;
+    let r: u32 = idx % inner;
+    // Calculate the base index for the reduction segment.
+    let base: u32 = outer * (d * inner) + r;
+    var sum: f32 = 0.0;
+    for (var a: u32 = 0u; a < d; a = a + 1u) {
+      sum = sum + A[base + a * inner];
     }
     B[idx] = sum;
   }
@@ -619,17 +642,26 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
     shader.loadKernelString(shaderCode);
     shader.setBuffer('A', buffer);
     shader.setBuffer('B', result.buffer);
-    int workgroups = (batch + 255) ~/ 256;
+    int workgroups = (totalOut + 255) ~/ 256;
     await shader.dispatch(workgroups, 1, 1);
     shader.destroy();
     return result;
   }
 
-  /// Reduces the tensor by computing the mean along the last dimension.
+  /// Reduces the tensor by computing the mean along the given dimension.
   Future<Tensor> mean({int axis = -1}) async {
-    // Compute sum then divide by d.
+    int n = shape.length;
+    // Normalize negative axis.
+    if (axis < 0) {
+      axis += n;
+    }
+    if (axis < 0 || axis >= n) {
+      throw Exception("Axis out of range.");
+    }
+    // Compute sum along the specified axis.
     Tensor sums = await sum(axis: axis);
-    int d = shape.last;
+    // Use the original dimension for division.
+    int d = shape[axis];
     Tensor result = await sums.multiplyScalar(1.0 / d);
     sums.destroy();
     return result;
@@ -637,37 +669,62 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
   /// Reduces the tensor by taking the maximum value along the last dimension.
   Future<Tensor> maxReduction({int axis = -1}) async {
-    if (axis != -1 && axis != shape.length - 1) {
-      throw Exception(
-          "Currently only max reduction along the last dimension is supported.");
+    int n = shape.length;
+    // Normalize negative axis.
+    if (axis < 0) {
+      axis += n;
     }
-    int d = shape.last;
-    int batch = size ~/ d;
-    List<int> outShape = shape.sublist(0, shape.length - 1);
+    if (axis < 0 || axis >= n) {
+      throw Exception("Axis out of range.");
+    }
+
+    // Compute product of dimensions before the axis (outer) and after (inner).
+    int outer = 1;
+    for (int i = 0; i < axis; i++) {
+      outer *= shape[i];
+    }
+    int d = shape[axis]; // Dimension to reduce.
+    int inner = 1;
+    for (int i = axis + 1; i < n; i++) {
+      inner *= shape[i];
+    }
+    int totalOut = outer * inner;
+
+    // Build output shape by removing the reduced axis.
+    List<int> outShape = List.from(shape)..removeAt(axis);
     Tensor result = await Tensor.create(outShape);
+
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
 
+const d: u32 = ${d}u;
+const inner: u32 = ${inner}u;
+const totalOut: u32 = ${totalOut}u;
+
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let idx: u32 = gid.x;
-  if (idx < ${batch}u) {
-    let d: u32 = ${d}u;
-    let offset: u32 = idx * d;
-    var max_val: f32 = A[offset];
+  if (idx < totalOut) {
+    let outer: u32 = idx / inner;
+    let r: u32 = idx % inner;
+    // Calculate the base index for this reduction slice.
+    let base: u32 = outer * (d * inner) + r;
+    var max_val: f32 = A[base];
+    // Iterate over the reduced dimension.
     for (var j: u32 = 1u; j < d; j = j + 1u) {
-      max_val = max(max_val, A[offset + j]);
+      max_val = max(max_val, A[base + j * inner]);
     }
     B[idx] = max_val;
   }
 }
 ''';
+
     final ComputeShader shader = gpu.createComputeShader();
     shader.loadKernelString(shaderCode);
     shader.setBuffer('A', buffer);
     shader.setBuffer('B', result.buffer);
-    int workgroups = (batch + 255) ~/ 256;
+    int workgroups = (totalOut + 255) ~/ 256;
     await shader.dispatch(workgroups, 1, 1);
     shader.destroy();
     return result;
@@ -675,37 +732,61 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
 
   /// Reduces the tensor by taking the minimum value along the last dimension.
   Future<Tensor> minReduction({int axis = -1}) async {
-    if (axis != -1 && axis != shape.length - 1) {
-      throw Exception(
-          "Currently only min reduction along the last dimension is supported.");
+    int n = shape.length;
+    // Normalize negative axis.
+    if (axis < 0) {
+      axis += n;
     }
-    int d = shape.last;
-    int batch = size ~/ d;
-    List<int> outShape = shape.sublist(0, shape.length - 1);
+    if (axis < 0 || axis >= n) {
+      throw Exception("Axis out of range.");
+    }
+
+    // Compute product of dimensions before the axis (outer) and after (inner).
+    int outer = 1;
+    for (int i = 0; i < axis; i++) {
+      outer *= shape[i];
+    }
+    int d = shape[axis]; // Dimension to reduce.
+    int inner = 1;
+    for (int i = axis + 1; i < n; i++) {
+      inner *= shape[i];
+    }
+    int totalOut = outer * inner;
+
+    // Build output shape by removing the reduced axis.
+    List<int> outShape = List.from(shape)..removeAt(axis);
     Tensor result = await Tensor.create(outShape);
+
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
 
+const d: u32 = ${d}u;
+const inner: u32 = ${inner}u;
+const totalOut: u32 = ${totalOut}u;
+
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let idx: u32 = gid.x;
-  if (idx < ${batch}u) {
-    let d: u32 = ${d}u;
-    let offset: u32 = idx * d;
-    var min_val: f32 = A[offset];
+  if (idx < totalOut) {
+    let outer: u32 = idx / inner;
+    let r: u32 = idx % inner;
+    // Calculate base index for the reduction slice.
+    let base: u32 = outer * (d * inner) + r;
+    var min_val: f32 = A[base];
     for (var j: u32 = 1u; j < d; j = j + 1u) {
-      min_val = min(min_val, A[offset + j]);
+      min_val = min(min_val, A[base + j * inner]);
     }
     B[idx] = min_val;
   }
 }
 ''';
+
     final ComputeShader shader = gpu.createComputeShader();
     shader.loadKernelString(shaderCode);
     shader.setBuffer('A', buffer);
     shader.setBuffer('B', result.buffer);
-    int workgroups = (batch + 255) ~/ 256;
+    int workgroups = (totalOut + 255) ~/ 256;
     await shader.dispatch(workgroups, 1, 1);
     shader.destroy();
     return result;
@@ -715,28 +796,51 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   /// The resulting tensor has shape equal to the input shape minus the last dimension
   /// and always stores indices as f32 values.
   Future<Tensor> argmax({int axis = -1}) async {
-    if (axis != -1 && axis != shape.length - 1) {
-      throw Exception(
-          "Currently only argmax along the last dimension is supported.");
+    int n = shape.length;
+    // Normalize negative axis.
+    if (axis < 0) {
+      axis += n;
     }
-    int d = shape.last;
-    int batch = size ~/ d;
-    List<int> outShape = shape.sublist(0, shape.length - 1);
+    if (axis < 0 || axis >= n) {
+      throw Exception("Axis out of range.");
+    }
+
+    // Compute product of dimensions before the axis (outer) and after (inner).
+    int outer = 1;
+    for (int i = 0; i < axis; i++) {
+      outer *= shape[i];
+    }
+    int d = shape[axis]; // Dimension to reduce.
+    int inner = 1;
+    for (int i = axis + 1; i < n; i++) {
+      inner *= shape[i];
+    }
+    int totalOut = outer * inner;
+
+    // Build output shape by removing the reduced axis.
+    List<int> outShape = List.from(shape)..removeAt(axis);
     Tensor result = await Tensor.create(outShape);
+
     final shaderCode = '''
 @group(0) @binding(0) var<storage, read_write> A: array<f32>;
 @group(0) @binding(1) var<storage, read_write> B: array<f32>;
 
+const d: u32 = ${d}u;
+const inner: u32 = ${inner}u;
+const totalOut: u32 = ${totalOut}u;
+
 @compute @workgroup_size(256)
-fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
   let idx: u32 = gid.x;
-  if (idx < ${batch}u) {
-    let d: u32 = ${d}u;
-    let offset: u32 = idx * d;
-    var max_val: f32 = A[offset];
+  if (idx < totalOut) {
+    let outer: u32 = idx / inner;
+    let r: u32 = idx % inner;
+    // Calculate the base index for this reduction slice.
+    let base: u32 = outer * (d * inner) + r;
+    var max_val: f32 = A[base];
     var max_index: u32 = 0u;
     for (var j: u32 = 1u; j < d; j = j + 1u) {
-      let val = A[offset + j];
+      let val = A[base + j * inner];
       if (val > max_val) {
          max_val = val;
          max_index = j;
@@ -746,11 +850,12 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   }
 }
 ''';
+
     final ComputeShader shader = gpu.createComputeShader();
     shader.loadKernelString(shaderCode);
     shader.setBuffer('A', buffer);
     shader.setBuffer('B', result.buffer);
-    int workgroups = (batch + 255) ~/ 256;
+    int workgroups = (totalOut + 255) ~/ 256;
     await shader.dispatch(workgroups, 1, 1);
     shader.destroy();
     return result;

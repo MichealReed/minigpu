@@ -69,7 +69,7 @@ Future<void> main() async {
   print("Head of Tensor A (first 2 rows, 2 cols): $headA");
 
   // Use tail() helper to get the last 2 rows and 2 columns of Tensor A.
-  final tailA = await a.tail([2, 2]);
+  final tailA = await a.tail([2, 2], pretty: true);
   print("Tail of Tensor A (last 2 rows, 2 cols): $tailA");
 
   // FFT demo (1D FFT)
@@ -80,7 +80,7 @@ Future<void> main() async {
     realData1D[i] = i.toDouble();
   }
   final realTensor1D = await Tensor.create([points1D], data: realData1D);
-  final fft1dResult = await realTensor1D.fft1d();
+  final fft1dResult = await realTensor1D.fft();
   final fft1dResultData = await fft1dResult.getData();
   print("FFT 1D result: $fft1dResultData");
 
@@ -93,7 +93,7 @@ Future<void> main() async {
     realData2D[i] = i.toDouble();
   }
   final realTensor2D = await Tensor.create([rows, cols], data: realData2D);
-  final fft2dResult = await realTensor2D.fft2d();
+  final fft2dResult = await realTensor2D.fft();
   final fft2dResultData = await fft2dResult.getData();
   print("FFT 2D result: $fft2dResultData");
 }

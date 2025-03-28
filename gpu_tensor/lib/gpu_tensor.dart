@@ -9,5 +9,6 @@ export 'src/gpu_activation.dart';
 export 'src/gpu_transform.dart';
 export 'src/gpu_data.dart';
 export 'src/gpu_print.dart';
+export 'src/gpu_pooling.dart';
 export 'src/gpu_ops.dart';
 export 'src/gpu_linear_ops.dart';
