@@ -2,14 +2,14 @@
 
 GPU Tensor is a Dart package for performing tensor operations leveraging GPU acceleration. It offers efficient slicing, element access, arithmetic operations, and FFT computations.
 
-
-
 - [x] Windows
 - [x] Linux
 - [x] Mac - Needs testing.
 - [x] Web
 - [x] Android
 - [x] iOS - Needs testing.
+
+**Disclaimer: This library is experimental and supported at will, use in production at your own risk.**
 
 ## Features
 
